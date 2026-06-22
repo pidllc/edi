@@ -21,3 +21,22 @@
     - CC: Alyssa <alyssa@pidllc.com>; Sidd Makker <sidd@3plwd.com>; Pidedi <edigroup@pidllc.com>
     - Subject: Samsdvs <date> -- EOD
 ## That finishes the Fedex Part of the EOD. The next part is invoicing.
+1. Go to WinFashion
+2. Click Invoice
+3. MultiInvoice
+4. It should be all the ones that need to be invoiced. If not filter as above pick tickets.
+5. Message people that you are invoicing so there is no clash.
+6. Wait for the invoicing to finish.
+
+## Once we are done with Invoicing we need to do the ASN (Advanced Ship Notice) and send it out.
+1.  Go to WinFashion
+2.  Go to EDI menu
+3.  Go to "EDI (856) ASN" -> choose "Sams Club DSV"
+4.  Change customer to "DSVSAMSC"
+5.  Change date to and from both to today.
+6.  Right click on ck column
+7.  Click Generate EDI-856 button
+8.  Click on save.
+9.  Append ".out" to the filename
+10. Copy the file to iSoft/outbox/walmart 
+
