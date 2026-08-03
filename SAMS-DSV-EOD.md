@@ -12,7 +12,7 @@
 6.  Cust. Like "dsv"
 7.  Confirm all records have "Shipvia Ref"
 8.  Log into the shipping computer in the warehouse that 3pl said to use.
-9.  Go to Fedex Ship Manager.
+9.  Go to Fedex Ship Manager
 10. Click on close tab
 11. Click on "End your shipping day" button
 12. Save the file to the system.
@@ -28,7 +28,7 @@
 5. Message people that you are invoicing so there is no clash.
 6. Wait for the invoicing to finish.
 
-## Once we are done with Invoicing we need to do the ASN (Advanced Ship Notice) and send it out.
+## Once we are done with Invoicing we need to do the ASN (Advanced Ship Notice) and send it out.ß
 1.  Go to WinFashion
 2.  Go to EDI menu
 3.  Go to "EDI (856) ASN" -> choose "Sams Club DSV"
@@ -36,7 +36,6 @@
 5.  Change date to and from both to today.
 6.  Right click on ck column
 7.  Click Generate EDI-856 button
-8.  Click on save.
+8.  Click on save
 9.  Append ".out" to the filename
-10. Copy the file to iSoft/outbox/walmart 
-
+10. Copy the file to iSoft/outbox/walmart
