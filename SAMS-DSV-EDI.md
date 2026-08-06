@@ -26,7 +26,14 @@
 20. PickNo. from and to (either keep it from 2000 to 9999999) or specify the exact pick ticket range.
 21. Change Max Qty Per Carton to 25. Leave Weight per piece to 1 (Means 1lb)
 22. Click Cart.Assgnt (Pick and Pack)
-23. go to pick tickets
-24. multi print. hide price
-25. Report pick  
-26. Generate 997 & 855 and send it out in isoft/outbox/walmart folder
+23. double click the first pick ticket 
+24. landscape  & Hide price
+25. multipick
+25. print
+26. Report -> Pick Ticket Register detail
+27. put pick ticket number and pick ticket date
+28. use profile SAMSD PK Summary
+29. Print to pdf.
+30. Attach both files and send to 3pl (Karen, EdiPid, Sidd)
+# When doing second batch.
+31. Generate 997 & 855 and send it out in isoft/outbox/walmart folder
