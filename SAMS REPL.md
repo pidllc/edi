@@ -58,8 +58,8 @@
         d) order# is sales order range (working on order# 1967522 - 1967543) for po# 3285170098xx
         e) reload
         f) export to any file.
-        g) send it to karen to update the quantiticy.
-        h) once she sends the excel file back import that file  and click process to update the quantitiy on pick tickets.
+        g) send it to karen to update the quantity.
+        h) once she sends the excel file back import that file  and click process to update the quantity on pick tickets.
 
 # Pick Tickets
 1. Sale order

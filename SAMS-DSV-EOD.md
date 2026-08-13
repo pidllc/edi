@@ -39,3 +39,11 @@
 8.  Click on save
 9.  Append ".out" to the filename
 10. Copy the file to iSoft/outbox/walmart
+
+## Tracking numbers
+1. log onto both computers
+2. Fedex ship manaager
+3. utility
+4. downloads
+5. check mark tracking numbers
+6. click download
