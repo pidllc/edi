@@ -10,6 +10,7 @@ Usage:
 
 import sys
 import re
+import os
 from datetime import datetime
 
 
@@ -409,7 +410,7 @@ def print_analysis(results):
     print("-" * 100)
 
     for r in results:
-        fname = r["file"].split("/")[-1][:21]
+        fname = os.path.basename(r["file"])[:21]
         ftype = determine_file_type(r)
 
         # Short type labels

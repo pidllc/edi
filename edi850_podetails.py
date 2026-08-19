@@ -10,6 +10,7 @@ Usage:
 
 import sys
 import re
+import os
 from datetime import datetime
 
 
@@ -206,7 +207,7 @@ def print_po_details(results):
         grand_total_amount = 0.0
 
         for r in results:
-            fname = r['file'].split('/')[-1][:24]
+            fname = os.path.basename(r['file'])[:24]
             po_count = r['po_count']
             file_qty = sum(po.get('total_qty', 0) for po in r['pos'])
             file_amount = sum(po.get('total_amount', 0) for po in r['pos'])
