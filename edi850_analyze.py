@@ -6,11 +6,13 @@ Parses and displays key information from EDI 850 files.
 Usage:
     python3 edi850_analyze.py <file1.in> [file2.in ...]
     python3 edi850_analyze.py *.in
+    python3 edi850_analyze.py /path/to/*.in
 """
 
 import sys
 import re
 import os
+import glob
 from datetime import datetime
 
 
@@ -453,14 +455,29 @@ def print_analysis(results):
         )
 
 
+def expand_args(args):
+    """Expand glob patterns in arguments so it works on all platforms."""
+    files = []
+    for arg in args:
+        expanded = glob.glob(arg)
+        if expanded:
+            files.extend(sorted(expanded))
+        else:
+            files.append(arg)
+    return files
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python3 edi850_analyze.py <file1.in> [file2.in ...]")
         print("       python3 edi850_analyze.py *.in")
+        print("       python3 edi850_analyze.py /path/to/*.in")
         sys.exit(1)
 
+    files = expand_args(sys.argv[1:])
+
     results = []
-    for filepath in sys.argv[1:]:
+    for filepath in files:
         try:
             result = parse_edi_file(filepath)
             results.append(result)

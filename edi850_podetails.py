@@ -6,11 +6,13 @@ Extracts individual PO details from EDI 850 files.
 Usage:
     python3 edi850_podetails.py <file1.in> [file2.in ...]
     python3 edi850_podetails.py *.in
+    python3 edi850_podetails.py /path/to/*.in
 """
 
 import sys
 import re
 import os
+import glob
 from datetime import datetime
 
 
@@ -221,14 +223,29 @@ def print_po_details(results):
         print(f"{'GRAND TOTAL':<25} {'':>5} {grand_total_qty:>12,} {grand_total_amount:>16,.2f}")
 
 
+def expand_args(args):
+    """Expand glob patterns in arguments so it works on all platforms."""
+    files = []
+    for arg in args:
+        expanded = glob.glob(arg)
+        if expanded:
+            files.extend(sorted(expanded))
+        else:
+            files.append(arg)
+    return files
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python3 edi850_podetails.py <file1.in> [file2.in ...]")
         print("       python3 edi850_podetails.py *.in")
+        print("       python3 edi850_podetails.py /path/to/*.in")
         sys.exit(1)
 
+    files = expand_args(sys.argv[1:])
+
     results = []
-    for filepath in sys.argv[1:]:
+    for filepath in files:
         try:
             result = parse_edi_850(filepath)
             results.append(result)
