@@ -6,27 +6,83 @@ Parses and displays key information from EDI 850 files.
 Usage:
     python3 edi850_analyze.py <file1.in> [file2.in ...]
     python3 edi850_analyze.py *.in
-    python3 edi850_analyze.py /path/to/*.in
+    python3 edi850_analyze.py --dir /path/to/Edifiles    # analyze all files in dir
+    python3 edi850_analyze.py                             # default: ./Edifiles/
 """
 
 import sys
-import re
 import os
-import glob
+import re
+import glob as globmod
 from datetime import datetime
+
+
+def detect_delimiters(filepath):
+    """Detect the segment terminator and data element separator from the ISA segment.
+
+    EDI files can use different delimiters:
+    - Segment terminator: ~ (tilde) or \\r (carriage return) or \\r\\n
+    - Data element separator: * (asterisk) or | (pipe)
+
+    Returns (segment_terminator_regex, data_separator, gs_functional_id).
+    """
+    with open(filepath, "rb") as f:
+        raw = f.read(512)  # ISA is always at the start, first 106+ bytes
+
+    # Find ISA segment boundaries — ISA starts at byte 0, ends at the 3rd character
+    # after ISA+16th data element. The ISA segment always ends with the segment
+    # terminator. We look for common patterns after "ISA*..." or "ISA|..."
+    raw_str = raw.decode("ascii", errors="replace")
+
+    # Detect data element separator: the character after "ISA" (position 3)
+    if len(raw_str) > 3 and raw_str[3] in ("*", "|"):
+        data_sep = raw_str[3]
+    else:
+        data_sep = "*"
+
+    # Detect segment terminator: find where ISA segment ends.
+    # NOTE: regex operates on text-mode data where Python normalizes \r\n -> \n,
+    # so we always use \n (not \r\n) as the regex terminator for CR/LF files.
+    if b"\r\n" in raw:
+        idx = raw.find(b"\r\n", 105)
+        if idx != -1 and idx < 200:
+            seg_term_re = r"\n"
+        else:
+            seg_term_re = r"~"
+    elif b"~" in raw[:200]:
+        seg_term_re = r"~"
+    else:
+        seg_term_re = r"\n"
+
+    # Detect GS functional ID
+    gs_match = re.search(r"GS[" + re.escape(data_sep) + r"]([A-Z]+)", raw_str)
+    gs_func_id = gs_match.group(1) if gs_match else ""
+
+    return seg_term_re, data_sep, gs_func_id
 
 
 def parse_edi_file(filepath):
     """Parse an EDI 850 file and extract all key fields."""
+    seg_term_re, data_sep, gs_func_id = detect_delimiters(filepath)
+
     with open(filepath) as f:
         data = f.read()
 
-    result = {"file": filepath, "raw_length": len(data)}
+    result = {
+        "file": filepath,
+        "raw_length": len(data),
+        "gs_functional_id": gs_func_id,
+        "data_sep": data_sep,
+    }
+
+    # Helper to build regex for a segment type
+    def seg_pattern(seg_type):
+        return r"" + seg_type + r"[" + re.escape(data_sep) + r"]([^" + seg_term_re + r"]+)" + seg_term_re
 
     # --- ISA Segment (Interchange Header) ---
-    isa_match = re.search(r"ISA\*(.+?)~", data)
+    isa_match = re.search(seg_pattern("ISA"), data)
     if isa_match:
-        parts = isa_match.group(1).split("*")
+        parts = isa_match.group(1).split(data_sep)
         result["isa_sender_id"] = parts[7].strip() if len(parts) > 7 else ""
         result["isa_receiver_id"] = parts[5].strip() if len(parts) > 5 else ""
         result["isa_date"] = parts[8] if len(parts) > 8 else ""
@@ -34,25 +90,17 @@ def parse_edi_file(filepath):
         result["isa_control"] = parts[12] if len(parts) > 12 else ""
         result["isa_version"] = parts[11] if len(parts) > 11 else ""
 
-    # --- GS Segment (Functional Group) ---
-    gs_match = re.search(r"GS\*([^~]+)~", data)
-    if gs_match:
-        parts = gs_match.group(1).split("*")
-        result["gs_functional_id"] = parts[0] if len(parts) > 0 else ""
-        result["gs_sender"] = parts[2].strip() if len(parts) > 2 else ""
-        result["gs_receiver"] = parts[3].strip() if len(parts) > 3 else ""
-
     # --- ST Segment (Transaction Set Header) ---
-    st_match = re.search(r"ST\*([^~]+)~", data)
+    st_match = re.search(seg_pattern("ST"), data)
     if st_match:
-        parts = st_match.group(1).split("*")
+        parts = st_match.group(1).split(data_sep)
         result["transaction_id"] = parts[0] if len(parts) > 0 else ""
         result["transaction_control"] = parts[1] if len(parts) > 1 else ""
 
     # --- BEG Segment (Beginning of Purchase Order) ---
-    beg_match = re.search(r"BEG\*([^~]+)~", data)
+    beg_match = re.search(seg_pattern("BEG"), data)
     if beg_match:
-        parts = beg_match.group(1).split("*")
+        parts = beg_match.group(1).split(data_sep)
         result["po_purpose"] = parts[0] if len(parts) > 0 else ""
         result["po_type"] = parts[1] if len(parts) > 1 else ""
         result["po_number"] = parts[2] if len(parts) > 2 else ""
@@ -60,49 +108,49 @@ def parse_edi_file(filepath):
         result["po_date"] = parts[4] if len(parts) > 4 else ""
 
     # --- CUR Segment (Currency) ---
-    cur_match = re.search(r"CUR\*([^~]+)~", data)
+    cur_match = re.search(seg_pattern("CUR"), data)
     if cur_match:
-        parts = cur_match.group(1).split("*")
+        parts = cur_match.group(1).split(data_sep)
         result["currency_entity"] = parts[0] if len(parts) > 0 else ""
         result["currency_code"] = parts[1] if len(parts) > 1 else ""
 
     # --- REF Segments (Reference Identifiers) ---
-    refs = re.findall(r"REF\*([^~]+)~", data)
+    refs = re.findall(seg_pattern("REF"), data)
     result["refs"] = {}
     for ref in refs:
-        parts = ref.split("*")
+        parts = ref.split(data_sep)
         if len(parts) >= 2:
             result["refs"][parts[0]] = parts[1]
 
     # --- FOB Segment ---
-    fob_match = re.search(r"FOB\*([^~]+)~", data)
+    fob_match = re.search(seg_pattern("FOB"), data)
     if fob_match:
         result["fob"] = fob_match.group(1)
 
     # --- ITD Segment (Terms of Sale) ---
-    itd_match = re.search(r"ITD\*([^~]+)~", data)
+    itd_match = re.search(seg_pattern("ITD"), data)
     if itd_match:
-        parts = itd_match.group(1).split("*")
+        parts = itd_match.group(1).split(data_sep)
         result["terms_code"] = parts[0] if len(parts) > 0 else ""
         result["terms_basis"] = parts[1] if len(parts) > 1 else ""
         result["terms_discount_pct"] = parts[2] if len(parts) > 2 else ""
         result["terms_net_days"] = parts[4] if len(parts) > 4 else ""
 
     # --- DTM Segments (Date/Time References) ---
-    dtms = re.findall(r"DTM\*([^~]+)~", data)
+    dtms = re.findall(seg_pattern("DTM"), data)
     result["dates"] = {}
     for dtm in dtms:
-        parts = dtm.split("*")
+        parts = dtm.split(data_sep)
         if len(parts) >= 2:
             qualifier = parts[0]
             date_val = parts[1]
             result["dates"][qualifier] = date_val
 
     # --- N1 Segments (Names/Locations) ---
-    n1s = re.findall(r"N1\*([^~]+)~", data)
+    n1s = re.findall(seg_pattern("N1"), data)
     result["names"] = []
     for n1 in n1s:
-        parts = n1.split("*")
+        parts = n1.split(data_sep)
         if len(parts) >= 2:
             entry = {
                 "qualifier": parts[0],
@@ -113,17 +161,17 @@ def parse_edi_file(filepath):
             result["names"].append(entry)
 
     # --- N3/N4 Segments (Address details) ---
-    n3s = re.findall(r"N3\*([^~]+)~", data)
-    n4s = re.findall(r"N4\*([^~]+)~", data)
+    n3s = re.findall(seg_pattern("N3"), data)
+    n4s = re.findall(seg_pattern("N4"), data)
     result["addresses"] = []
     for i in range(max(len(n3s), len(n4s))):
         addr = {}
         if i < len(n3s):
-            parts = n3s[i].split("*")
+            parts = n3s[i].split(data_sep)
             addr["addr1"] = parts[0] if len(parts) > 0 else ""
             addr["addr2"] = parts[1] if len(parts) > 1 else ""
         if i < len(n4s):
-            parts = n4s[i].split("*")
+            parts = n4s[i].split(data_sep)
             addr["city"] = parts[0] if len(parts) > 0 else ""
             addr["state"] = parts[1] if len(parts) > 1 else ""
             addr["zip"] = parts[2] if len(parts) > 2 else ""
@@ -131,13 +179,12 @@ def parse_edi_file(filepath):
         result["addresses"].append(addr)
 
     # --- PO1 Segments (Line Items) ---
-    po1s = re.findall(r"PO1\*([^~]+)~", data)
+    po1s = re.findall(seg_pattern("PO1"), data)
     result["line_items"] = []
     result["total_line_qty"] = 0
     result["total_line_amount"] = 0.0
     for po1 in po1s:
-        # PO1*line*qty*uom*price*price_qual*item_qual*item*upc_qual*upc*vn_qual*vn*size_qual*size
-        parts = po1.split("*")
+        parts = po1.split(data_sep)
         if len(parts) >= 5:
             try:
                 qty = int(parts[1])
@@ -164,10 +211,10 @@ def parse_edi_file(filepath):
             result["total_line_amount"] += qty * price
 
     # --- SAC Segments (Allowances/Charges) ---
-    sacs = re.findall(r"SAC\*([^~]+)~", data)
+    sacs = re.findall(seg_pattern("SAC"), data)
     result["sac"] = []
     for sac in sacs:
-        parts = sac.split("*")
+        parts = sac.split(data_sep)
         if len(parts) >= 5:
             try:
                 amount = float(parts[4])
@@ -182,28 +229,31 @@ def parse_edi_file(filepath):
             })
 
     # --- MTX Segments (Notes/Special Instructions) ---
-    mtxs = re.findall(r"MTX\*([^~]+)~", data)
+    mtxs = re.findall(seg_pattern("MTX"), data)
     result["notes"] = []
     for mtx in mtxs:
-        parts = mtx.split("*")
+        parts = mtx.split(data_sep)
         for p in parts:
             if p and p.strip():
                 result["notes"].append(p.strip())
 
     # --- TD5 Segments (Carrier Info) ---
-    td5s = re.findall(r"TD5\*([^~]+)~", data)
+    td5s = re.findall(seg_pattern("TD5"), data)
     result["carrier"] = []
     for td5 in td5s:
         result["carrier"].append(td5)
 
     # --- CTT Segment (Transaction Totals) ---
-    ctt_match = re.search(r"CTT\*([^~]+)~", data)
+    ctt_match = re.search(seg_pattern("CTT"), data)
     if ctt_match:
-        parts = ctt_match.group(1).split("*")
+        parts = ctt_match.group(1).split(data_sep)
         result["ctt_line_count"] = parts[0] if len(parts) > 0 else ""
 
     # --- AMT Segment (Total Amount) ---
-    amt_match = re.search(r"AMT\*1\*([^~]+)~", data)
+    amt_match = re.search(seg_pattern("AMT") + r"?\*1\*([^" + seg_term_re + r"]+)", data)
+    if not amt_match:
+        # Fallback: search without segment boundary
+        amt_match = re.search(r"AMT" + re.escape(data_sep) + r"1" + re.escape(data_sep) + r"([^" + seg_term_re + r"]+)", data)
     if amt_match:
         try:
             result["total_amount"] = float(amt_match.group(1))
@@ -211,6 +261,39 @@ def parse_edi_file(filepath):
             result["total_amount"] = 0.0
 
     return result
+
+
+def discover_edi_files(directory):
+    """Discover all EDI files in a directory.
+
+    Returns list of (filepath, gs_functional_id) tuples.
+    Non-850 files are skipped with a warning.
+    """
+    results = []
+    skipped = []
+
+    for entry in sorted(os.listdir(directory)):
+        if entry.startswith(".") or entry == "__pycache__":
+            continue
+        filepath = os.path.join(directory, entry)
+        if not os.path.isfile(filepath):
+            continue
+
+        try:
+            _, _, gs_func_id = detect_delimiters(filepath)
+            if gs_func_id == "PO":
+                results.append(filepath)
+            else:
+                skipped.append((entry, gs_func_id))
+        except Exception as e:
+            skipped.append((entry, f"ERROR: {e}"))
+
+    if skipped:
+        print(f"\nSkipped {len(skipped)} non-850 file(s):")
+        for name, reason in skipped:
+            print(f"  {name}  (GS={reason})")
+
+    return results
 
 
 def parse_edi_date(date_str):
@@ -389,7 +472,6 @@ def print_analysis(results):
         notes = r.get("notes", [])
         if notes:
             print(f"\n  Special Instructions:")
-            # Deduplicate and limit
             seen = set()
             for n in notes:
                 if n not in seen and n not in ("", "=" * len(n)):
@@ -412,10 +494,9 @@ def print_analysis(results):
     print("-" * 100)
 
     for r in results:
-        fname = os.path.basename(r["file"])[:21]
+        fname = r["file"].split("/")[-1][:21]
         ftype = determine_file_type(r)
 
-        # Short type labels
         if "DSV" in ftype:
             short_type = "DSV"
         elif "REPLEN" in ftype:
@@ -434,12 +515,10 @@ def print_analysis(results):
         cancel_date = format_date(dates.get("038", ""))
         mab_date = format_date(dates.get("063", ""))
 
-        # Flags
         is_dsv = "Y" if "DSV" in ftype else "N"
         is_rollout = "Y" if "ROLLOUT" in ftype else "N"
         is_replen = "Y" if "REPLEN" in ftype else "N"
 
-        # Ship To summary
         ship_tos = [n for n in r.get("names", []) if n["qualifier"] == "ST"]
         if len(ship_tos) == 1:
             ship_to = ship_tos[0]["name"][:30] if ship_tos[0]["name"] else "1 DC"
@@ -455,29 +534,57 @@ def print_analysis(results):
         )
 
 
-def expand_args(args):
-    """Expand glob patterns in arguments so it works on all platforms."""
-    files = []
-    for arg in args:
-        expanded = glob.glob(arg)
-        if expanded:
-            files.extend(sorted(expanded))
-        else:
-            files.append(arg)
-    return files
-
-
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 edi850_analyze.py <file1.in> [file2.in ...]")
-        print("       python3 edi850_analyze.py *.in")
-        print("       python3 edi850_analyze.py /path/to/*.in")
-        sys.exit(1)
+    # If --dir is provided, discover files from that directory
+    # If no args at all, default to ./Edifiles/ relative to script location
+    # If positional args, use them as file paths
 
-    files = expand_args(sys.argv[1:])
+    edifiles_dir = None
+    filepaths = []
+
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] == "--dir" and i + 1 < len(args):
+            edifiles_dir = args[i + 1]
+            i += 2
+        elif args[i] == "--help" or args[i] == "-h":
+            print("Usage:")
+            print("  python3 edi850_analyze.py <file1> [file2 ...]")
+            print("  python3 edi850_analyze.py --dir /path/to/Edifiles")
+            print("  python3 edi850_analyze.py              # default: ./Edifiles/ next to script")
+            sys.exit(0)
+        else:
+            filepaths.append(args[i])
+            i += 1
+
+    if edifiles_dir:
+        if not os.path.isdir(edifiles_dir):
+            print(f"Error: directory not found: {edifiles_dir}")
+            sys.exit(1)
+        filepaths = discover_edi_files(edifiles_dir)
+        if not filepaths:
+            print(f"No EDI 850 files found in {edifiles_dir}")
+            sys.exit(1)
+        print(f"Found {len(filepaths)} EDI 850 file(s) in {edifiles_dir}")
+    elif not filepaths:
+        # Default: look for Edifiles/ next to the script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        default_dir = os.path.join(script_dir, "Edifiles")
+        if os.path.isdir(default_dir):
+            edifiles_dir = default_dir
+            filepaths = discover_edi_files(edifiles_dir)
+            if not filepaths:
+                print(f"No EDI 850 files found in {edifiles_dir}")
+                sys.exit(1)
+            print(f"Found {len(filepaths)} EDI 850 file(s) in {edifiles_dir}")
+        else:
+            print("Usage: python3 edi850_analyze.py <file1> [file2 ...]")
+            print("       python3 edi850_analyze.py --dir /path/to/Edifiles")
+            sys.exit(1)
 
     results = []
-    for filepath in files:
+    for filepath in filepaths:
         try:
             result = parse_edi_file(filepath)
             results.append(result)

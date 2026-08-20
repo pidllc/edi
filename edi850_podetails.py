@@ -6,14 +6,87 @@ Extracts individual PO details from EDI 850 files.
 Usage:
     python3 edi850_podetails.py <file1.in> [file2.in ...]
     python3 edi850_podetails.py *.in
-    python3 edi850_podetails.py /path/to/*.in
+    python3 edi850_podetails.py --dir /path/to/Edifiles    # analyze all files in dir
+    python3 edi850_podetails.py                             # default: ./Edifiles/
 """
 
 import sys
-import re
 import os
-import glob
+import re
 from datetime import datetime
+
+
+def detect_delimiters(filepath):
+    """Detect the segment terminator and data element separator from the ISA segment.
+
+    EDI files can use different delimiters:
+    - Segment terminator: ~ (tilde) or \\r (carriage return) or \\r\\n
+    - Data element separator: * (asterisk) or | (pipe)
+
+    Returns (segment_terminator_regex, data_separator, gs_functional_id).
+    """
+    with open(filepath, "rb") as f:
+        raw = f.read(512)
+
+    raw_str = raw.decode("ascii", errors="replace")
+
+    # Detect data element separator: the character after "ISA" (position 3)
+    if len(raw_str) > 3 and raw_str[3] in ("*", "|"):
+        data_sep = raw_str[3]
+    else:
+        data_sep = "*"
+
+    # Detect segment terminator: find where ISA segment ends.
+    # NOTE: regex operates on text-mode data where Python normalizes \r\n -> \n,
+    # so we always use \n (not \r\n) as the regex terminator for CR/LF files.
+    if b"\r\n" in raw:
+        idx = raw.find(b"\r\n", 105)
+        if idx != -1 and idx < 200:
+            seg_term_re = r"\n"
+        else:
+            seg_term_re = r"~"
+    elif b"~" in raw[:200]:
+        seg_term_re = r"~"
+    else:
+        seg_term_re = r"\n"
+
+    # Detect GS functional ID
+    gs_match = re.search(r"GS[" + re.escape(data_sep) + r"]([A-Z]+)", raw_str)
+    gs_func_id = gs_match.group(1) if gs_match else ""
+
+    return seg_term_re, data_sep, gs_func_id
+
+
+def discover_edi_files(directory):
+    """Discover all EDI 850 files in a directory.
+
+    Returns list of filepath strings (only GS=PO files).
+    """
+    results = []
+    skipped = []
+
+    for entry in sorted(os.listdir(directory)):
+        if entry.startswith(".") or entry == "__pycache__":
+            continue
+        filepath = os.path.join(directory, entry)
+        if not os.path.isfile(filepath):
+            continue
+
+        try:
+            _, _, gs_func_id = detect_delimiters(filepath)
+            if gs_func_id == "PO":
+                results.append(filepath)
+            else:
+                skipped.append((entry, gs_func_id))
+        except Exception as e:
+            skipped.append((entry, f"ERROR: {e}"))
+
+    if skipped:
+        print(f"\nSkipped {len(skipped)} non-850 file(s):")
+        for name, reason in skipped:
+            print(f"  {name}  (GS={reason})")
+
+    return results
 
 
 def parse_edi_date(date_str):
@@ -27,11 +100,10 @@ def parse_edi_date(date_str):
         return date_str
 
 
-def extract_po_sections(data):
+def extract_po_sections(data, seg_term_re, data_sep):
     """Split EDI data into individual PO sections based on BEG segments."""
-    # Find all BEG segment positions
-    beg_pattern = r'BEG\*([^~]+)~'
-    beg_matches = list(re.finditer(beg_pattern, data))
+    pattern = r"BEG[" + re.escape(data_sep) + r"]([^" + seg_term_re + r"]+)" + seg_term_re
+    beg_matches = list(re.finditer(pattern, data))
 
     if not beg_matches:
         return []
@@ -39,71 +111,73 @@ def extract_po_sections(data):
     sections = []
     for i, match in enumerate(beg_matches):
         start = match.start()
-        # End at next BEG or end of file
         end = beg_matches[i + 1].start() if i + 1 < len(beg_matches) else len(data)
         sections.append(data[start:end])
 
     return sections
 
 
-def parse_po_section(section_data, global_dates):
+def parse_po_section(section_data, global_dates, seg_term_re, data_sep):
     """Parse a single PO section and extract details."""
     result = {}
 
+    def seg_pattern(seg_type):
+        return r"" + seg_type + r"[" + re.escape(data_sep) + r"]([^" + seg_term_re + r"]+)" + seg_term_re
+
     # BEG segment - PO number and date
-    beg_match = re.search(r'BEG\*([^~]+)~', section_data)
+    beg_match = re.search(seg_pattern("BEG"), section_data)
     if beg_match:
-        parts = beg_match.group(1).split('*')
-        result['po_number'] = parts[2] if len(parts) > 2 else 'N/A'
-        result['po_date'] = parts[4] if len(parts) > 4 else ''
+        parts = beg_match.group(1).split(data_sep)
+        result["po_number"] = parts[2] if len(parts) > 2 else "N/A"
+        result["po_date"] = parts[4] if len(parts) > 4 else ""
 
     # N1*ST - Ship To
-    st_match = re.search(r'N1\*ST\*([^~]+)~', section_data)
+    n1_pattern = r"N1[" + re.escape(data_sep) + r"]ST[" + re.escape(data_sep) + r"]([^" + seg_term_re + r"]+)" + seg_term_re
+    st_match = re.search(n1_pattern, section_data)
     if st_match:
-        parts = st_match.group(1).split('*')
-        result['ship_to_name'] = parts[0] if len(parts) > 0 else ''
-        result['ship_to_id'] = parts[2] if len(parts) > 2 else ''
+        parts = st_match.group(1).split(data_sep)
+        result["ship_to_name"] = parts[0] if len(parts) > 0 else ""
+        result["ship_to_id"] = parts[2] if len(parts) > 2 else ""
     else:
-        result['ship_to_name'] = ''
-        result['ship_to_id'] = ''
+        result["ship_to_name"] = ""
+        result["ship_to_id"] = ""
 
     # N3/N4 - Ship To Address
-    n3_match = re.search(r'N3\*([^~]+)~', section_data)
-    n4_match = re.search(r'N4\*([^~]+)~', section_data)
+    n3_match = re.search(seg_pattern("N3"), section_data)
+    n4_match = re.search(seg_pattern("N4"), section_data)
     if n3_match and n4_match:
-        n3_parts = n3_match.group(1).split('*')
-        n4_parts = n4_match.group(1).split('*')
-        result['ship_to_addr'] = n3_parts[0] if n3_parts else ''
-        result['ship_to_city'] = n4_parts[0] if len(n4_parts) > 0 else ''
-        result['ship_to_state'] = n4_parts[1] if len(n4_parts) > 1 else ''
-        result['ship_to_zip'] = n4_parts[2] if len(n4_parts) > 2 else ''
+        n3_parts = n3_match.group(1).split(data_sep)
+        n4_parts = n4_match.group(1).split(data_sep)
+        result["ship_to_addr"] = n3_parts[0] if n3_parts else ""
+        result["ship_to_city"] = n4_parts[0] if len(n4_parts) > 0 else ""
+        result["ship_to_state"] = n4_parts[1] if len(n4_parts) > 1 else ""
+        result["ship_to_zip"] = n4_parts[2] if len(n4_parts) > 2 else ""
     else:
-        result['ship_to_addr'] = ''
-        result['ship_to_city'] = ''
-        result['ship_to_state'] = ''
-        result['ship_to_zip'] = ''
+        result["ship_to_addr"] = ""
+        result["ship_to_city"] = ""
+        result["ship_to_state"] = ""
+        result["ship_to_zip"] = ""
 
     # DTM segments - dates (use section-specific if present, else global)
-    dtms = re.findall(r'DTM\*([^~]+)~', section_data)
+    dtms = re.findall(seg_pattern("DTM"), section_data)
     section_dates = {}
     for dtm in dtms:
-        parts = dtm.split('*')
+        parts = dtm.split(data_sep)
         if len(parts) >= 2:
             section_dates[parts[0]] = parts[1]
 
-    # Use section dates, fall back to global
-    result['ship_date'] = section_dates.get('037', global_dates.get('037', ''))
-    result['cancel_date'] = section_dates.get('038', global_dates.get('038', ''))
-    result['must_arrive_by'] = section_dates.get('063', global_dates.get('063', ''))
+    result["ship_date"] = section_dates.get("037", global_dates.get("037", ""))
+    result["cancel_date"] = section_dates.get("038", global_dates.get("038", ""))
+    result["must_arrive_by"] = section_dates.get("063", global_dates.get("063", ""))
 
     # PO1 segments - line items
-    po1s = re.findall(r'PO1\*([^~]+)~', section_data)
-    result['line_count'] = len(po1s)
-    result['total_qty'] = 0
-    result['total_amount'] = 0.0
+    po1s = re.findall(seg_pattern("PO1"), section_data)
+    result["line_count"] = len(po1s)
+    result["total_qty"] = 0
+    result["total_amount"] = 0.0
 
     for po1 in po1s:
-        parts = po1.split('*')
+        parts = po1.split(data_sep)
         if len(parts) >= 4:
             try:
                 qty = int(parts[1])
@@ -113,17 +187,17 @@ def parse_po_section(section_data, global_dates):
                 price = float(parts[3])
             except (ValueError, IndexError):
                 price = 0.0
-            result['total_qty'] += qty
-            result['total_amount'] += qty * price
+            result["total_qty"] += qty
+            result["total_amount"] += qty * price
 
     # SAC segments - allowances/charges for this PO
-    sacs = re.findall(r'SAC\*([^~]+)~', section_data)
-    result['sac_total'] = 0.0
+    sacs = re.findall(seg_pattern("SAC"), section_data)
+    result["sac_total"] = 0.0
     for sac in sacs:
-        parts = sac.split('*')
+        parts = sac.split(data_sep)
         if len(parts) >= 5:
             try:
-                result['sac_total'] += float(parts[4])
+                result["sac_total"] += float(parts[4])
             except (ValueError, IndexError):
                 pass
 
@@ -132,33 +206,38 @@ def parse_po_section(section_data, global_dates):
 
 def parse_edi_850(filepath):
     """Parse an EDI 850 file and extract all PO details."""
+    seg_term_re, data_sep, gs_func_id = detect_delimiters(filepath)
+
     with open(filepath) as f:
         data = f.read()
 
+    def seg_pattern(seg_type):
+        return r"" + seg_type + r"[" + re.escape(data_sep) + r"]([^" + seg_term_re + r"]+)" + seg_term_re
+
     # Get global dates from first DTM segments (before any BEG)
-    first_beg = re.search(r'BEG\*', data)
-    header_data = data[:first_beg.start()] if first_beg else data
+    first_beg = re.search(r"BEG[" + re.escape(data_sep) + r"]", data)
+    header_data = data[: first_beg.start()] if first_beg else data
 
     global_dates = {}
-    dtms = re.findall(r'DTM\*([^~]+)~', header_data)
+    dtms = re.findall(seg_pattern("DTM"), header_data)
     for dtm in dtms:
-        parts = dtm.split('*')
+        parts = dtm.split(data_sep)
         if len(parts) >= 2:
             global_dates[parts[0]] = parts[1]
 
     # Extract individual PO sections
-    sections = extract_po_sections(data)
+    sections = extract_po_sections(data, seg_term_re, data_sep)
 
     # Parse each PO section
     pos = []
     for section in sections:
-        po = parse_po_section(section, global_dates)
+        po = parse_po_section(section, global_dates, seg_term_re, data_sep)
         pos.append(po)
 
     return {
-        'file': filepath,
-        'po_count': len(pos),
-        'pos': pos
+        "file": filepath,
+        "po_count": len(pos),
+        "pos": pos,
     }
 
 
@@ -177,14 +256,14 @@ def print_po_details(results):
         total_qty = 0
         total_amount = 0.0
 
-        for i, po in enumerate(r['pos'], 1):
-            ship_date = parse_edi_date(po.get('ship_date', ''))
-            cancel_date = parse_edi_date(po.get('cancel_date', ''))
-            mab_date = parse_edi_date(po.get('must_arrive_by', ''))
+        for i, po in enumerate(r["pos"], 1):
+            ship_date = parse_edi_date(po.get("ship_date", ""))
+            cancel_date = parse_edi_date(po.get("cancel_date", ""))
+            mab_date = parse_edi_date(po.get("must_arrive_by", ""))
 
-            qty = po.get('total_qty', 0)
-            amt = po.get('total_amount', 0)
-            ship_to = po.get('ship_to_name', 'N/A')
+            qty = po.get("total_qty", 0)
+            amt = po.get("total_amount", 0)
+            ship_to = po.get("ship_to_name", "N/A")
 
             total_qty += qty
             total_amount += amt
@@ -209,10 +288,10 @@ def print_po_details(results):
         grand_total_amount = 0.0
 
         for r in results:
-            fname = os.path.basename(r['file'])[:24]
-            po_count = r['po_count']
-            file_qty = sum(po.get('total_qty', 0) for po in r['pos'])
-            file_amount = sum(po.get('total_amount', 0) for po in r['pos'])
+            fname = r["file"].split("/")[-1][:24]
+            po_count = r["po_count"]
+            file_qty = sum(po.get("total_qty", 0) for po in r["pos"])
+            file_amount = sum(po.get("total_amount", 0) for po in r["pos"])
 
             grand_total_qty += file_qty
             grand_total_amount += file_amount
@@ -223,29 +302,52 @@ def print_po_details(results):
         print(f"{'GRAND TOTAL':<25} {'':>5} {grand_total_qty:>12,} {grand_total_amount:>16,.2f}")
 
 
-def expand_args(args):
-    """Expand glob patterns in arguments so it works on all platforms."""
-    files = []
-    for arg in args:
-        expanded = glob.glob(arg)
-        if expanded:
-            files.extend(sorted(expanded))
-        else:
-            files.append(arg)
-    return files
-
-
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 edi850_podetails.py <file1.in> [file2.in ...]")
-        print("       python3 edi850_podetails.py *.in")
-        print("       python3 edi850_podetails.py /path/to/*.in")
-        sys.exit(1)
+    edifiles_dir = None
+    filepaths = []
 
-    files = expand_args(sys.argv[1:])
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] == "--dir" and i + 1 < len(args):
+            edifiles_dir = args[i + 1]
+            i += 2
+        elif args[i] == "--help" or args[i] == "-h":
+            print("Usage:")
+            print("  python3 edi850_podetails.py <file1> [file2 ...]")
+            print("  python3 edi850_podetails.py --dir /path/to/Edifiles")
+            print("  python3 edi850_podetails.py              # default: ./Edifiles/ next to script")
+            sys.exit(0)
+        else:
+            filepaths.append(args[i])
+            i += 1
+
+    if edifiles_dir:
+        if not os.path.isdir(edifiles_dir):
+            print(f"Error: directory not found: {edifiles_dir}")
+            sys.exit(1)
+        filepaths = discover_edi_files(edifiles_dir)
+        if not filepaths:
+            print(f"No EDI 850 files found in {edifiles_dir}")
+            sys.exit(1)
+        print(f"Found {len(filepaths)} EDI 850 file(s) in {edifiles_dir}")
+    elif not filepaths:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        default_dir = os.path.join(script_dir, "Edifiles")
+        if os.path.isdir(default_dir):
+            edifiles_dir = default_dir
+            filepaths = discover_edi_files(edifiles_dir)
+            if not filepaths:
+                print(f"No EDI 850 files found in {edifiles_dir}")
+                sys.exit(1)
+            print(f"Found {len(filepaths)} EDI 850 file(s) in {edifiles_dir}")
+        else:
+            print("Usage: python3 edi850_podetails.py <file1> [file2 ...]")
+            print("       python3 edi850_podetails.py --dir /path/to/Edifiles")
+            sys.exit(1)
 
     results = []
-    for filepath in files:
+    for filepath in filepaths:
         try:
             result = parse_edi_850(filepath)
             results.append(result)
