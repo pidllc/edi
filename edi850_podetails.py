@@ -13,6 +13,7 @@ Usage:
 import sys
 import os
 import re
+import glob as globmod
 from datetime import datetime
 
 
@@ -331,7 +332,34 @@ def main():
             print(f"No EDI 850 files found in {edifiles_dir}")
             sys.exit(1)
         print(f"Found {len(filepaths)} EDI 850 file(s) in {edifiles_dir}")
-    elif not filepaths:
+    elif filepaths:
+        # Expand glob patterns (works on Windows and Unix)
+        expanded = []
+        for pattern in filepaths:
+            matches = globmod.glob(pattern)
+            if matches:
+                expanded.extend(matches)
+            else:
+                print(f"Warning: no files matched pattern: {pattern}")
+        filepaths = [f for f in expanded if os.path.isfile(f)]
+        if not filepaths:
+            print("No matching files found.")
+            sys.exit(1)
+        # Verify they are 850 files
+        verified = []
+        for fp in filepaths:
+            try:
+                _, _, gs_func_id = detect_delimiters(fp)
+                if gs_func_id == "PO":
+                    verified.append(fp)
+            except Exception as e:
+                print(f"Warning: could not read {fp}: {e}")
+        filepaths = verified
+        if not filepaths:
+            print("No valid EDI 850 files found in the matched files.")
+            sys.exit(1)
+        print(f"Found {len(filepaths)} EDI 850 file(s)")
+    else:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         default_dir = os.path.join(script_dir, "Edifiles")
         if os.path.isdir(default_dir):
