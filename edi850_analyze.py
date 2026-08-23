@@ -487,14 +487,14 @@ def print_analysis(results):
     print("SUMMARY TABLE")
     print(f"{'=' * 100}")
     print(
-        f"{'File':<22} {'Type':<14} {'Qty':>8} {'POs':>5} {'Amount':>14} "
+        f"{'File':<24} {'Type':<14} {'Qty':>8} {'POs':>5} {'Amount':>14} "
         f"{'Ship Date':>11} {'Cancel':>11} {'MAB By':>11} "
         f"{'DSV':^5} {'Roll':^5} {'Repl':^5} {'Ship To'}"
     )
     print("-" * 100)
 
     for r in results:
-        fname = r["file"].split("/")[-1][:21]
+        fname = r["file"].split("/")[-1][-22:]
         ftype = determine_file_type(r)
 
         if "DSV" in ftype:
@@ -528,7 +528,7 @@ def print_analysis(results):
             ship_to = "N/A"
 
         print(
-            f"{fname:<22} {short_type:<14} {qty:>8,} {lines:>5} {amt:>14,.2f} "
+            f"{fname:<24} {short_type:<14} {qty:>8,} {lines:>5} {amt:>14,.2f} "
             f"{ship_date:>11} {cancel_date:>11} {mab_date:>11} "
             f"{is_dsv:^5} {is_rollout:^5} {is_replen:^5} {ship_to}"
         )
