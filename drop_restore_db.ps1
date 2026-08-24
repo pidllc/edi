@@ -4,7 +4,12 @@
 $Server = "192.168.168.106,2436"
 $Databases = @("flask", "wfashion")
 $BackupFile = "F:\SQLBACKUP\82026.bak"
-$MonitoringDir = "C:\path\to\sql-monitoring"  # Update this path
+$RepoRoot = & git rev-parse --show-toplevel 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Not a git repository. Please run this script from within a git repository." -ForegroundColor Red
+    exit 1
+}
+$MonitoringDir = "$RepoRoot/sql-monitoring"  # Update this path
 
 # Load credentials from saved file
 $credFile = "$env:USERPROFILE\workspace\saved_pass"
