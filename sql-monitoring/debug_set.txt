@@ -1,0 +1,1 @@
+[edi_type] = '850', [docnumber] = NULL, [edi_processed] = NULL, [custid] = NULL, [senderid] = NULL, [senderqual] = NULL, [receiverid] = NULL, [receiverqual] = NULL, [ISA_control] = NULL, [ISA_Date] = NULL, [isdoc] = 'Y

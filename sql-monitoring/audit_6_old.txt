@@ -1,0 +1,1 @@
+[{"edi_id":116825,"edi_type":"850","docnumber":"026samsd (79).in.txt","edi_processed":"2026-08-20T16:42:51.120","custid":"DSVSAMSC","senderid":"424978AS       ","senderqual":"ZZ","receiverid":"925485USSM     ","receiverqual":"08","ISA_control":"850177288","ISA_Date":"2026-08-20T09:32:00","isdoc":"N"}]

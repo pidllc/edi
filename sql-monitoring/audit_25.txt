@@ -1,0 +1,1 @@
+[{"customer":"DSVSAMSC            ","po":"7885441197          ","sku":"19396857630         ","edi_unit":"EA","price":9.9500,"multiplier":0.0000,"seq_no":"002","edi_id":"UP","edi_po_sku_qty_id":24032748,"sku_in":"990493376           ","sku_up":"193968576301","releaseno":"                    "}]

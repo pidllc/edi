@@ -1,0 +1,3 @@
+Changed database context to 'wf125sR_82026'.
+Msg 262, Level 14, State 18, Server NJWFDEVSQL, Procedure sp_audit_reconstruct_sql, Line 2
+CREATE PROCEDURE permission denied in database 'wf125sR_82026'.

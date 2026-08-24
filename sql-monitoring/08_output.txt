@@ -1,0 +1,7 @@
+Changed database context to 'wf125sR_82026'.
+Msg 262, Level 14, State 1, Server NJWFDEVSQL, Line 5
+CREATE TABLE permission denied in database 'wf125sR_82026'.
+Msg 262, Level 14, State 1, Server NJWFDEVSQL, Line 5
+CREATE TABLE permission denied in database 'wf125sR_82026'.
+Msg 262, Level 14, State 1, Server NJWFDEVSQL, Line 5
+CREATE TABLE permission denied in database 'wf125sR_82026'.
