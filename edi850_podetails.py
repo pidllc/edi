@@ -167,9 +167,9 @@ def parse_po_section(section_data, global_dates, seg_term_re, data_sep):
         if len(parts) >= 2:
             section_dates[parts[0]] = parts[1]
 
-    result["ship_date"] = section_dates.get("037", global_dates.get("037", ""))
-    result["cancel_date"] = section_dates.get("038", global_dates.get("038", ""))
-    result["must_arrive_by"] = section_dates.get("063", global_dates.get("063", ""))
+    result["ship_date"] = section_dates.get("037", section_dates.get("830", global_dates.get("037", global_dates.get("830", ""))))
+    result["cancel_date"] = section_dates.get("038", section_dates.get("002", global_dates.get("038", global_dates.get("002", ""))))
+    result["must_arrive_by"] = section_dates.get("063", section_dates.get("001", global_dates.get("063", global_dates.get("001", ""))))
 
     # PO1 segments - line items
     po1s = re.findall(seg_pattern("PO1"), section_data)

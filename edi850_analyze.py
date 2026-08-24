@@ -396,12 +396,13 @@ def print_analysis(results):
             print(f"\n  Dates:")
             date_labels = {
                 "001": "Delivery Requested",
-                "002": "Ship Not Before",
+                "002": "Cancel Date",
                 "004": "Order Date",
-                "037": "Ship Date (Must Arrive By)",
-                "038": "Cancel Date",
-                "063": "Deliver By Date",
                 "010": "Requested Ship",
+                "037": "Ship Date (Must Arrive By)",
+                "038": "Cancel Date (Alt)",
+                "063": "Deliver By Date",
+                "830": "Ship Not Before",
             }
             for k, v in sorted(dates.items()):
                 label = date_labels.get(k, k)
@@ -511,9 +512,9 @@ def print_analysis(results):
         amt = r.get("total_line_amount", 0)
         dates = r.get("dates", {})
 
-        ship_date = format_date(dates.get("037", ""))
-        cancel_date = format_date(dates.get("038", ""))
-        mab_date = format_date(dates.get("063", ""))
+        ship_date = format_date(dates.get("037", dates.get("830", "")))
+        cancel_date = format_date(dates.get("038", dates.get("002", "")))
+        mab_date = format_date(dates.get("063", dates.get("001", "")))
 
         is_dsv = "Y" if "DSV" in ftype else "N"
         is_rollout = "Y" if "ROLLOUT" in ftype else "N"
