@@ -8,8 +8,10 @@ $MonitoringDir = "C:\path\to\sql-monitoring"  # Update this path
 
 # Load credentials from saved file
 $credFile = "$env:USERPROFILE\workspace\saved_pass"
+$DB_Creds = get-content "$env:USERPROFILE\workspace\saved_pass" 
+$DEV_DB_SA_USER =  ($DB_Creds -split '\r\n' | select -first 1).split("=") | select -last 1 | ForEach-Object { $_.Trim() }
+$DEV_DB_SA_PASS = ($DB_Creds -split '\r\n' | select -last 1).split("=") | select -last 1 | ForEach-Object { $_.Trim() }
 if (Test-Path $credFile) {
-    . $credFile
     $Username = $DEV_DB_SA_USER
     $Password = $DEV_DB_SA_PASS
 } else {

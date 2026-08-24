@@ -622,7 +622,7 @@ def main():
 
     if results:
         print_analysis(results)
-
+    print(f"Found {len(filepaths)} EDI 850 file(s) in {args}")
 
 if __name__ == "__main__":
     main()
