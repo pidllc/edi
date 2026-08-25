@@ -36,4 +36,4 @@
 29. Print to pdf.
 30. Attach both files and send to 3pl (Karen, EdiPid, Sidd)
 # When doing second batch.
-31. Generate 997 & 855 and send it out in isoft/outbox/walmart folder
+31. Generate 997 & 855. Rename with .out extension and send it out in isoft/outbox/walmart folder
