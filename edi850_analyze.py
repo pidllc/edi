@@ -97,10 +97,11 @@ def parse_edi_file(filepath):
         result["transaction_id"] = parts[0] if len(parts) > 0 else ""
         result["transaction_control"] = parts[1] if len(parts) > 1 else ""
 
-    # --- BEG Segment (Beginning of Purchase Order) ---
-    beg_match = re.search(seg_pattern("BEG"), data)
-    if beg_match:
-        parts = beg_match.group(1).split(data_sep)
+    # --- BEG Segments (Beginning of Purchase Order) ---
+    beg_matches = re.findall(seg_pattern("BEG"), data)
+    result["po_count"] = len(beg_matches)
+    if beg_matches:
+        parts = beg_matches[0].split(data_sep)
         result["po_purpose"] = parts[0] if len(parts) > 0 else ""
         result["po_type"] = parts[1] if len(parts) > 1 else ""
         result["po_number"] = parts[2] if len(parts) > 2 else ""
@@ -462,7 +463,8 @@ def print_analysis(results):
 
         # Line Items Summary
         line_items = r.get("line_items", [])
-        print(f"\n  Line Items:       {len(line_items)}")
+        print(f"\n  POs:              {r.get('po_count', len(line_items))}")
+        print(f"  Line Items:       {len(line_items)}")
         print(f"  Total Quantity:   {r.get('total_line_qty', 0):,}")
         print(f"  Total Amount:     ${r.get('total_line_amount', 0):,.2f}")
 
@@ -508,7 +510,7 @@ def print_analysis(results):
             short_type = ftype[:13]
 
         qty = r.get("total_line_qty", 0)
-        lines = len(r.get("line_items", []))
+        lines = r.get("po_count", len(r.get("line_items", [])))
         amt = r.get("total_line_amount", 0)
         dates = r.get("dates", {})
 
