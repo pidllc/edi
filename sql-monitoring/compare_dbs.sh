@@ -20,6 +20,7 @@ mkdir -p "$REPO_ROOT/temp"
 # Parse arguments
 SNAPSHOT_MODE=false
 NO_BASELINE=false
+SUMMARY_ONLY=false
 DB1=""
 DB2=""
 
@@ -27,6 +28,7 @@ for arg in "$@"; do
   case "$arg" in
     --snapshot) SNAPSHOT_MODE=true ;;
     --no-baseline) NO_BASELINE=true ;;
+    --summary-only) SUMMARY_ONLY=true ;;
     -*) echo "Unknown flag: $arg"; exit 1 ;;
     *)
       if [ -z "$DB1" ]; then DB1="$arg"
@@ -36,7 +38,7 @@ for arg in "$@"; do
   esac
 done
 
-DB1="${DB1:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline]}"
+DB1="${DB1:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline] [--summary-only]}"
 DB2="${DB2:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline]}"
 
 REPORT="$REPO_ROOT/temp/compare_${DB1}_${DB2}_${TIMESTAMP}.txt"
@@ -266,7 +268,7 @@ fi
 log ""
 
 # --- Row-level detail for changed tables ---
-if [ -s "$CHANGED_TABLES_FILE" ]; then
+if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
   log "================================================================"
   log "ROW-LEVEL CHANGES (up to 100 per table)"
   log "================================================================"
@@ -277,6 +279,13 @@ if [ -s "$CHANGED_TABLES_FILE" ]; then
     TNAME=$(echo "$tbl" | cut -d. -f2 | tr -d '[]')
     log ""
     log "  === $tbl ==="
+
+    # Skip row-level diff for very large tables (>500K rows) to avoid timeouts
+    TBL_CNT=$(awk -v t="$tbl" '$1==t {print $2}' "$TMPDIR/state1.txt")
+    if [ "${TBL_CNT:-0}" -gt 500000 ]; then
+      log "  (skipped: ${TBL_CNT} rows - too large for row-level diff)"
+      continue
+    fi
 
     # Get PK columns
     PK_COLS=$(run "$DB1" "SELECT ku.COLUMN_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku ON tc.CONSTRAINT_NAME=ku.CONSTRAINT_NAME WHERE tc.TABLE_NAME='$TNAME' AND tc.TABLE_SCHEMA='$SCHEMA' AND tc.CONSTRAINT_TYPE IN ('PRIMARY KEY','UNIQUE') ORDER BY ku.ORDINAL_POSITION" | grep -v '^$' | grep -v 'COLUMN_NAME' | grep -v '^--' | grep -v 'rows affected' | grep -v '^(' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || true)
@@ -325,20 +334,16 @@ if [ -s "$CHANGED_TABLES_FILE" ]; then
     if [ "$HAS_BASELINE" = true ]; then
       # --- Baseline-aware: show changes per DB ---
 
-      # DB1: new rows (in current but not in baseline)
-      R1=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'NEW_IN_${DB1}' AS change_type, $PKSelect FROM [${DB1}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM OPENROWSET('Microsoft.ACE.OLEDB.12.0','Text;Database=${SNAPSHOT_DIR};HDR=YES','SELECT * FROM [snapshot_${DB1}.txt]') b WHERE 1=0)" 2>/dev/null || true)
-
-      # Simpler approach: use BINARY_CHECKSUM to find new/changed rows
-      # Rows only in current DB1 (not matchable by PK+checksum in baseline)
-      R1=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'NEW_IN_${DB1}' AS change_type, $PKSelect, BINARY_CHECKSUM(*) AS row_chk FROM [${DB1}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB2}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" || true)
+      # Rows only in current DB1 (not in DB2 by PK)
+      R1=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'NEW_IN_${DB1}' AS change_type, $PKSelect FROM [${DB1}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB2}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" || true)
       R1_COUNT=$(echo "$R1" | grep -c 'NEW_IN_' || true)
       if [ "$R1_COUNT" -gt 0 ]; then
         log "  >> New rows in $DB1 (not in $DB2, up to 100):"
         echo "$R1" | grep 'NEW_IN_' | head -100 | while IFS= read -r line; do log "    $line"; done
       fi
 
-      # Rows only in current DB2 (not in DB1)
-      R2=$(run "$DB2" "SET NOCOUNT ON; SELECT TOP 100 'NEW_IN_${DB2}' AS change_type, $PKSelect, BINARY_CHECKSUM(*) AS row_chk FROM [${DB2}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB1}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" || true)
+      # Rows only in current DB2 (not in DB1 by PK)
+      R2=$(run "$DB2" "SET NOCOUNT ON; SELECT TOP 100 'NEW_IN_${DB2}' AS change_type, $PKSelect FROM [${DB2}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB1}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" || true)
       R2_COUNT=$(echo "$R2" | grep -c 'NEW_IN_' || true)
       if [ "$R2_COUNT" -gt 0 ]; then
         log "  >> New rows in $DB2 (not in $DB1, up to 100):"
@@ -392,7 +397,177 @@ if [ -s "$CHANGED_TABLES_FILE" ]; then
   done < "$CHANGED_TABLES_FILE"
 fi
 
+# ============================================================
+# SUMMARY
+# ============================================================
+log ""
+log "================================================================"
+log "SUMMARY"
+log "================================================================"
+log ""
+
+# Count changed tables
+CHANGED_COUNT=0
+if [ -s "$CHANGED_TABLES_FILE" ]; then
+  CHANGED_COUNT=$(wc -l < "$CHANGED_TABLES_FILE" | tr -d ' ')
+fi
+
+# Count tables only in each DB
+ONLY_DB1_COUNT=0
+ONLY_DB2_COUNT=0
+if [ "$HAS_BASELINE" = true ]; then
+  [ -n "$NEW_IN_DB1" ] && ONLY_DB1_COUNT=$(echo "$NEW_IN_DB1" | wc -l | tr -d ' ')
+  [ -n "$NEW_IN_DB2" ] && ONLY_DB2_COUNT=$(echo "$NEW_IN_DB2" | wc -l | tr -d ' ')
+  [ -n "$DROPPED_FROM_DB1" ] && ONLY_DB1_COUNT=$(( ONLY_DB1_COUNT + $(echo "$DROPPED_FROM_DB1" | wc -l | tr -d ' ') ))
+  [ -n "$DROPPED_FROM_DB2" ] && ONLY_DB2_COUNT=$(( ONLY_DB2_COUNT + $(echo "$DROPPED_FROM_DB2" | wc -l | tr -d ' ') ))
+else
+  [ -n "$T_ONLY1" ] && ONLY_DB1_COUNT=$(echo "$T_ONLY1" | wc -l | tr -d ' ')
+  [ -n "$T_ONLY2" ] && ONLY_DB2_COUNT=$(echo "$T_ONLY2" | wc -l | tr -d ' ')
+fi
+
+log "  Databases compared:     $DB1 vs $DB2"
+log "  Tables in $DB1:        $T1_COUNT"
+log "  Tables in $DB2:        $T2_COUNT"
+log "  Tables only in $DB1:   $ONLY_DB1_COUNT"
+log "  Tables only in $DB2:   $ONLY_DB2_COUNT"
+log "  Tables with changes:   $CHANGED_COUNT"
+log ""
+
+# Highlight divergences (where row counts differ between DBs)
+if [ "$HAS_BASELINE" = true ] && [ -s "$CHANGED_TABLES_FILE" ]; then
+  DIVERGENCE_FOUND=false
+  while IFS= read -r tbl; do
+    [ -z "$tbl" ] && continue
+    c1_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state1.txt")
+    c1_cnt=$(echo "$c1_line" | awk '{print $2}')
+    c2_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state2.txt")
+    c2_cnt=$(echo "$c2_line" | awk '{print $2}')
+    if [ -n "$c1_cnt" ] && [ -n "$c2_cnt" ] && [ "$c1_cnt" != "$c2_cnt" ]; then
+      if [ "$DIVERGENCE_FOUND" = false ]; then
+        log "  DIVERGENCES ($DB1 vs $DB2 row count mismatch):"
+        DIVERGENCE_FOUND=true
+      fi
+      delta=$(( c2_cnt - c1_cnt ))
+      log "    $tbl: $c1_cnt vs $c2_cnt (delta: $delta)"
+    fi
+  done < "$CHANGED_TABLES_FILE"
+  if [ "$DIVERGENCE_FOUND" = false ]; then
+    log "  Divergences: NONE (all changed tables have identical row counts)"
+  fi
+fi
+
 log ""
 log "================================================================"
 log "REPORT SAVED: $REPORT"
+
+# ============================================================
+# GENERATE MARKDOWN REPORT
+# ============================================================
+MDREPORT="${REPORT%.txt}.md"
+
+{
+echo "# Database Comparison Report"
+echo ""
+echo "**Date**: $(date '+%Y-%m-%d %H:%M:%S')  "
+echo "**Databases**: \`$DB1\` vs \`$DB2\`  "
+echo "**Server**: $SERVER  "
+echo "**Mode**: $([ "$NO_BASELINE" = true ] && echo 'no-baseline' || echo 'baseline-aware')"
+echo ""
+echo "---"
+echo ""
+echo "## Overview"
+echo ""
+echo "| Metric | Value |"
+echo "|--------|-------|"
+echo "| Tables in \`$DB1\` | $T1_COUNT |"
+echo "| Tables in \`$DB2\` | $T2_COUNT |"
+echo "| Tables only in \`$DB1\` | $ONLY_DB1_COUNT |"
+echo "| Tables only in \`$DB2\` | $ONLY_DB2_COUNT |"
+echo "| Tables with changes | $CHANGED_COUNT |"
+
+if [ "$HAS_BASELINE" = true ] && [ -s "$CHANGED_TABLES_FILE" ]; then
+  DIVERGENCE_COUNT=0
+  while IFS= read -r tbl; do
+    [ -z "$tbl" ] && continue
+    c1_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state1.txt")
+    c1_cnt=$(echo "$c1_line" | awk '{print $2}')
+    c2_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state2.txt")
+    c2_cnt=$(echo "$c2_line" | awk '{print $2}')
+    [ -n "$c1_cnt" ] && [ -n "$c2_cnt" ] && [ "$c1_cnt" != "$c2_cnt" ] && DIVERGENCE_COUNT=$((DIVERGENCE_COUNT + 1))
+  done < "$CHANGED_TABLES_FILE"
+  echo "| Divergences (row count mismatch) | $DIVERGENCE_COUNT |"
+fi
+echo ""
+
+if [ -n "$T_ONLY1" ] || [ -n "$T_ONLY2" ]; then
+  echo "### Schema Differences"
+  echo ""
+  if [ -n "$T_ONLY1" ]; then
+    echo "**Tables only in \`$DB1\`**:"
+    echo '```'
+    echo "$T_ONLY1"
+    echo '```'
+    echo ""
+  fi
+  if [ -n "$T_ONLY2" ]; then
+    echo "**Tables only in \`$DB2\`**:"
+    echo '```'
+    echo "$T_ONLY2"
+    echo '```'
+    echo ""
+  fi
+fi
+
+if [ "$HAS_BASELINE" = true ] && [ -s "$CHANGED_TABLES_FILE" ]; then
+  echo "## Data Changes"
+  echo ""
+  echo "| Table | $DB1 | $DB2 | Delta |"
+  echo "|-------|------|------|-------|"
+  while IFS= read -r tbl; do
+    [ -z "$tbl" ] && continue
+    c1_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state1.txt")
+    c1_cnt=$(echo "$c1_line" | awk '{print $2}')
+    c1_chk=$(echo "$c1_line" | awk '{print $3}')
+    c2_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state2.txt")
+    c2_cnt=$(echo "$c2_line" | awk '{print $2}')
+    c2_chk=$(echo "$c2_line" | awk '{print $3}')
+    b1_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/base1.txt")
+    b1_cnt=$(echo "$b1_line" | awk '{print $2}')
+    b2_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/base2.txt")
+    b2_cnt=$(echo "$b2_line" | awk '{print $2}')
+    delta=$(( ${c2_cnt:-0} - ${c1_cnt:-0} ))
+    delta_str=""
+    [ "$delta" -ne 0 ] && delta_str="$delta"
+    echo "| \`$tbl\` | ${b1_cnt:-?}→$c1_cnt | ${b2_cnt:-?}→$c2_cnt | $delta_str |"
+  done < "$CHANGED_TABLES_FILE"
+  echo ""
+
+  echo "### Divergences"
+  echo ""
+  DIV_FOUND=false
+  while IFS= read -r tbl; do
+    [ -z "$tbl" ] && continue
+    c1_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state1.txt")
+    c1_cnt=$(echo "$c1_line" | awk '{print $2}')
+    c2_line=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/state2.txt")
+    c2_cnt=$(echo "$c2_line" | awk '{print $2}')
+    if [ -n "$c1_cnt" ] && [ -n "$c2_cnt" ] && [ "$c1_cnt" != "$c2_cnt" ]; then
+      DIV_FOUND=true
+      delta=$(( c2_cnt - c1_cnt ))
+      echo "- \`$tbl\`: $c1_cnt ($DB1) vs $c2_cnt ($DB2) — delta $delta"
+    fi
+  done < "$CHANGED_TABLES_FILE"
+  if [ "$DIV_FOUND" = false ]; then
+    echo "_No divergences detected._"
+  fi
+  echo ""
+fi
+
+echo "---"
+echo ""
+echo "_Report generated by \`compare_dbs.sh\`_"
+
+} > "$MDREPORT"
+
+log "MARKDOWN REPORT SAVED: $MDREPORT"
 log "================================================================"

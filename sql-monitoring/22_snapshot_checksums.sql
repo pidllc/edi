@@ -1,8 +1,10 @@
 SET NOCOUNT ON;
 SET QUOTED_IDENTIFIER ON;
 
--- Generates row counts + CHECKSUM_AGG for all user tables (baseline snapshot)
+-- Generates row counts for all user tables (baseline snapshot)
 -- Output format: table_name|row_count|checksum
+-- Uses COUNT only (BINARY_CHECKSUM is too slow on 588 tables with large row counts)
+-- Change detection relies on row-count delta + row-level TOP 100 diff
 
 DECLARE @sql NVARCHAR(MAX) = N'';
 DECLARE @name NVARCHAR(256);
@@ -17,7 +19,7 @@ FETCH NEXT FROM c INTO @name;
 WHILE @@FETCH_STATUS=0
 BEGIN
   IF @sql <> N'' SET @sql = @sql + N' UNION ALL ';
-  SET @sql = @sql + N'SELECT ' + QUOTENAME(@name, '''') + N' AS tbl, COUNT_BIG(*) AS cnt, ISNULL(CHECKSUM_AGG(BINARY_CHECKSUM(*)), 0) AS chk FROM ' + @name;
+  SET @sql = @sql + N'SELECT ' + QUOTENAME(@name, '''') + N' AS tbl, COUNT_BIG(*) AS cnt, 0 AS chk FROM ' + @name;
   FETCH NEXT FROM c INTO @name;
 END
 CLOSE c; DEALLOCATE c;
