@@ -5,7 +5,7 @@
 #   ./compare_dbs.sh <db1> <db2>                Compare using baseline (if exists)
 #   ./compare_dbs.sh <db1> <db2> --no-baseline  Compare without baseline (counts + triggers only)
 #
-# Output: temp/compare_<db1>_<db2>_<datetime>.txt
+# Output: temp/reports/<runtime>/compare_<db1>_<db2>_<datetime>.txt (+ csv/ subdir)
 
 set -euo pipefail
 
@@ -41,10 +41,15 @@ done
 DB1="${DB1:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline] [--summary-only]}"
 DB2="${DB2:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline]}"
 
-REPORT="$REPO_ROOT/temp/compare_${DB1}_${DB2}_${TIMESTAMP}.txt"
+REPORT_DIR="$REPO_ROOT/temp/reports/${TIMESTAMP}"
+mkdir -p "$REPORT_DIR"
+REPORT="$REPORT_DIR/compare_${DB1}_${DB2}_${TIMESTAMP}.txt"
 SNAPSHOT_DIR="$REPO_ROOT/temp"
 SNAP1="$SNAPSHOT_DIR/snapshot_${DB1}.txt"
 SNAP2="$SNAPSHOT_DIR/snapshot_${DB2}.txt"
+CSV_DIR="$REPORT_DIR/csv"
+mkdir -p "$CSV_DIR"
+CSV_FILES_CREATED=()
 
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
@@ -52,6 +57,34 @@ trap "rm -rf $TMPDIR" EXIT
 log() { echo "$1" | tee -a "$REPORT"; }
 run() { sqlcmd -S "$SERVER" -d "$1" -U "$USER" -P "$PASS" -C -Q "$2" -y 0 </dev/null 2>&1; }
 runfile() { sqlcmd -S "$SERVER" -d "$1" -U "$USER" -P "$PASS" -C -i "$2" -y 0 </dev/null 2>&1; }
+
+# --- CSV export helper ---
+# Usage: export_csv <src_db> <query> <outfile> <header_csv>
+# Tries bcp first (full NVARCHAR(MAX) support), falls back to sqlcmd.
+export_csv() {
+  local _src_db="$1"
+  local _query="$2"
+  local _outfile="$3"
+  local _header="$4"
+  echo "$_header" > "$_outfile"
+  local _tmp="${_outfile}.tmp"
+  # Try bcp (handles large columns, proper quoting via -c)
+  if command -v bcp >/dev/null 2>&1; then
+    if bcp "$_query" queryout "$_tmp" -S "$SERVER" -U "$USER" -P "$PASS" -c -t "," -r "\n" -C RAW >/dev/null 2>&1; then
+      cat "$_tmp" >> "$_outfile"
+      rm -f "$_tmp"
+      CSV_FILES_CREATED+=("$_outfile")
+      return 0
+    fi
+    rm -f "$_tmp"
+  fi
+  # Fallback: sqlcmd with -y 0 -s "," -h -1 (header suppressed, we already wrote it)
+  sqlcmd -S "$SERVER" -d "$_src_db" -U "$USER" -P "$PASS" -C -s "," -y 0 -h -1 -Q "SET NOCOUNT ON; $_query" -o "$_tmp" 2>/dev/null || true
+  # Filter sqlcmd artifacts: dashed separator lines, "rows affected", empty
+  grep -v -E '^(--)' "$_tmp" 2>/dev/null | grep -v "rows affected" | grep -v "^$" | grep -v "^\s*$" >> "$_outfile" || true
+  rm -f "$_tmp"
+  CSV_FILES_CREATED+=("$_outfile")
+}
 
 parse_counts() {
   grep -E '^\[' | awk '{print $1, $2}'
@@ -270,8 +303,9 @@ log ""
 # --- Row-level detail for changed tables ---
 if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
   log "================================================================"
-  log "ROW-LEVEL CHANGES (up to 100 per table)"
+  log "ROW-LEVEL CHANGES (up to 100 per table - full diff in CSV if truncated)"
   log "================================================================"
+  log "CSV output dir: $CSV_DIR"
 
   while IFS= read -r tbl; do
     [ -z "$tbl" ] && continue
@@ -280,18 +314,18 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
     log ""
     log "  === $tbl ==="
 
-    # Skip row-level diff for very large tables (>500K rows) to avoid timeouts
     TBL_CNT=$(awk -v t="$tbl" '$1==t {print $2}' "$TMPDIR/state1.txt")
+    LARGE_TABLE=false
     if [ "${TBL_CNT:-0}" -gt 500000 ]; then
-      log "  (skipped: ${TBL_CNT} rows - too large for row-level diff)"
-      continue
+      LARGE_TABLE=true
+      log "  (large table: ${TBL_CNT} rows - interactive diff limited to 100, full export to CSV)"
     fi
 
     # Get PK columns
     PK_COLS=$(run "$DB1" "SELECT ku.COLUMN_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku ON tc.CONSTRAINT_NAME=ku.CONSTRAINT_NAME WHERE tc.TABLE_NAME='$TNAME' AND tc.TABLE_SCHEMA='$SCHEMA' AND tc.CONSTRAINT_TYPE IN ('PRIMARY KEY','UNIQUE') ORDER BY ku.ORDINAL_POSITION" | grep -v '^$' | grep -v 'COLUMN_NAME' | grep -v '^--' | grep -v 'rows affected' | grep -v '^(' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || true)
 
     if [ -z "$PK_COLS" ]; then
-      log "  (no PK/UNIQUE constraint - row-level diff skipped)"
+      log "  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)"
       continue
     fi
 
@@ -306,7 +340,17 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
       PKSelect="${PKSelect}a.[$col]"
     done <<< "$PK_COLS"
 
-    # Build full select for "column diff" queries
+    # Build full col list for CSV full-row exports (all columns)
+    CSV_ALL_SELECT=""
+    CSV_ALL_HEADER=""
+    while IFS= read -r col; do
+      [ -z "$col" ] && continue
+      if [ -n "$CSV_ALL_SELECT" ]; then CSV_ALL_SELECT="$CSV_ALL_SELECT, "; CSV_ALL_HEADER="$CSV_ALL_HEADER,"; fi
+      CSV_ALL_SELECT="${CSV_ALL_SELECT}a.[$col]"
+      CSV_ALL_HEADER="${CSV_ALL_HEADER}$col"
+    done <<< "$ALL_COLS"
+
+    # Build full select for "column diff" queries (pairwise)
     ABCols=""
     while IFS= read -r col; do
       [ -z "$col" ] && continue
@@ -331,15 +375,26 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
       DIFFCond="${DIFFCond}ISNULL(CAST(a.[$col] AS NVARCHAR(MAX)), '') <> ISNULL(CAST(b.[$col] AS NVARCHAR(MAX)), '')"
     done <<< "$ALL_COLS"
 
-    if [ "$HAS_BASELINE" = true ]; then
+    # Helper: sanitized table name for files
+    SAFE_TBL="${SCHEMA}_${TNAME}"
+
+    # Track counts for CSV decision
+    R1_COUNT=0; R2_COUNT=0; RD_COUNT=0
+
+    # Interactive TOP-100 is skipped for large tables (>500K) to avoid timeouts; CSV will hold full diff
+    if [ "$LARGE_TABLE" = true ]; then
+      log "  (large table - interactive TOP 100 skipped, CSV will contain full diff)"
+      # R*_COUNT stay 0; NEED_CSV already true, counts will be derived via COUNT(*) in CSV section
+    elif [ "$HAS_BASELINE" = true ]; then
       # --- Baseline-aware: show changes per DB ---
 
-      # Rows only in current DB1 (not in DB2 by PK)
+      # Rows only in current DB1 (not in DB2 by PK) - TOP 100 interactive
       R1=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'NEW_IN_${DB1}' AS change_type, $PKSelect FROM [${DB1}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB2}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" || true)
       R1_COUNT=$(echo "$R1" | grep -c 'NEW_IN_' || true)
       if [ "$R1_COUNT" -gt 0 ]; then
         log "  >> New rows in $DB1 (not in $DB2, up to 100):"
         echo "$R1" | grep 'NEW_IN_' | head -100 | while IFS= read -r line; do log "    $line"; done
+        [ "$R1_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
       fi
 
       # Rows only in current DB2 (not in DB1 by PK)
@@ -348,6 +403,7 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
       if [ "$R2_COUNT" -gt 0 ]; then
         log "  >> New rows in $DB2 (not in $DB1, up to 100):"
         echo "$R2" | grep 'NEW_IN_' | head -100 | while IFS= read -r line; do log "    $line"; done
+        [ "$R2_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
       fi
 
       # Modified rows (same PK, different data)
@@ -357,6 +413,7 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
         if [ "$RD_COUNT" -gt 0 ]; then
           log "  >> Modified rows (same PK, different data, up to 100):"
           echo "$RD" | grep 'MODIFIED' | head -100 | while IFS= read -r line; do log "    $line"; done
+          [ "$RD_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
         fi
       fi
     else
@@ -368,6 +425,7 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
       if [ "$R1_COUNT" -gt 0 ]; then
         log "  >> Rows only in $DB1 (up to 100):"
         echo "$R1" | grep 'ONLY_IN_' | head -100 | while IFS= read -r line; do log "    $line"; done
+        [ "$R1_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
       else
         log "  >> Rows only in $DB1: none"
       fi
@@ -378,6 +436,7 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
       if [ "$R2_COUNT" -gt 0 ]; then
         log "  >> Rows only in $DB2 (up to 100):"
         echo "$R2" | grep 'ONLY_IN_' | head -100 | while IFS= read -r line; do log "    $line"; done
+        [ "$R2_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
       else
         log "  >> Rows only in $DB2: none"
       fi
@@ -389,8 +448,76 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
         if [ "$RD_COUNT" -gt 0 ]; then
           log "  >> Modified rows (up to 100):"
           echo "$RD" | grep 'MODIFIED' | head -100 | while IFS= read -r line; do log "    $line"; done
+          [ "$RD_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
         else
           log "  >> Modified rows: none"
+        fi
+      fi
+    fi
+
+    # --- CSV EXPORT (if truncated, large table, or any divergence) ---
+    NEED_CSV=false
+    if [ "$LARGE_TABLE" = true ]; then NEED_CSV=true; fi
+    if [ "${R1_COUNT:-0}" -ge 100 ] || [ "${R2_COUNT:-0}" -ge 100 ] || [ "${RD_COUNT:-0}" -ge 100 ]; then NEED_CSV=true; fi
+    # Also export if row-count divergence exceeds 100 (even if TOP 100 not hit due to sampling)
+    c1_cnt=$(awk -v t="$tbl" '$1==t {print $2}' "$TMPDIR/state1.txt")
+    c2_cnt=$(awk -v t="$tbl" '$1==t {print $2}' "$TMPDIR/state2.txt")
+    if [ -n "$c1_cnt" ] && [ -n "$c2_cnt" ]; then
+      delta_abs=$(( c1_cnt > c2_cnt ? c1_cnt - c2_cnt : c2_cnt - c1_cnt ))
+      [ "$delta_abs" -gt 100 ] && NEED_CSV=true
+    fi
+    # If small table but has any diff, also provide CSV for completeness (user requested)
+    if [ "${R1_COUNT:-0}" -gt 0 ] || [ "${R2_COUNT:-0}" -gt 0 ] || [ "${RD_COUNT:-0}" -gt 0 ]; then
+      # For small tables (<500k) with <100 diffs, CSV is cheap - export anyway if there is any diff
+      # This ensures edi_po (22 rows) also gets a CSV as requested for "too many" threshold is still met via LARGE check;
+      # enable for all diffs to give machine-readable output
+      NEED_CSV=true
+    fi
+
+    if [ "$NEED_CSV" = true ]; then
+      log "  >> CSV export for $tbl -> $CSV_DIR/"
+
+      # Build header for full-row CSV (same as ALL_COLS)
+      # 1) New in DB1 - full rows
+      if [ "${R1_COUNT:-0}" -gt 0 ] || [ "$LARGE_TABLE" = true ]; then
+        CSV1="$CSV_DIR/${SAFE_TBL}__new_in_${DB1}.csv"
+        Q1="SELECT $CSV_ALL_SELECT FROM [${DB1}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB2}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)"
+        # Count actual rows for logging (fast COUNT)
+        ACTUAL_R1=$(run "$DB1" "SET NOCOUNT ON; SELECT COUNT(*) AS cnt FROM [${DB1}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB2}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" | grep -E '[0-9]+' | grep -v "rows affected" | grep -v -- "--" | tr -d ' ' | head -1 || echo "?")
+        log "     exporting new_in_${DB1} ($ACTUAL_R1 rows) -> $(basename "$CSV1")"
+        export_csv "$DB1" "$Q1" "$CSV1" "$CSV_ALL_HEADER" || log "     CSV export failed for $CSV1"
+      fi
+
+      # 2) New in DB2 - full rows
+      if [ "${R2_COUNT:-0}" -gt 0 ] || [ "$LARGE_TABLE" = true ]; then
+        CSV2="$CSV_DIR/${SAFE_TBL}__new_in_${DB2}.csv"
+        Q2="SELECT $CSV_ALL_SELECT FROM [${DB2}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB1}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)"
+        ACTUAL_R2=$(run "$DB2" "SET NOCOUNT ON; SELECT COUNT(*) AS cnt FROM [${DB2}].[${SCHEMA}].[${TNAME}] a WHERE NOT EXISTS (SELECT 1 FROM [${DB1}].[${SCHEMA}].[${TNAME}] b WHERE $JOINCond)" | grep -E '[0-9]+' | grep -v "rows affected" | grep -v -- "--" | tr -d ' ' | head -1 || echo "?")
+        log "     exporting new_in_${DB2} ($ACTUAL_R2 rows) -> $(basename "$CSV2")"
+        export_csv "$DB2" "$Q2" "$CSV2" "$CSV_ALL_HEADER" || log "     CSV export failed for $CSV2"
+      fi
+
+      # 3) Modified - full pairwise rows (if applicable)
+      if [ -n "$DIFFCond" ]; then
+        # Check if any modified exist at all (even if TOP100 was 0, large table may have mods)
+        MOD_CHECK=$(run "$DB1" "SET NOCOUNT ON; SELECT COUNT(*) AS cnt FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond" | grep -E '[0-9]+' | grep -v "rows affected" | grep -v -- "--" | tr -d ' ' | head -1 || echo "0")
+        # Strip non-digits
+        MOD_CHECK_NUM=$(echo "$MOD_CHECK" | tr -cd '0-9')
+        [ -z "$MOD_CHECK_NUM" ] && MOD_CHECK_NUM=0
+        if [ "$MOD_CHECK_NUM" -gt 0 ] || [ "${RD_COUNT:-0}" -gt 0 ]; then
+          CSV3="$CSV_DIR/${SAFE_TBL}__modified.csv"
+          MOD_HEADER=""
+          MOD_SELECT=""
+          first=true
+          while IFS= read -r col; do
+            [ -z "$col" ] && continue
+            if [ "$first" = true ]; then first=false; else MOD_HEADER="$MOD_HEADER,"; MOD_SELECT="$MOD_SELECT, "; fi
+            MOD_HEADER="${MOD_HEADER}${col}_${DB1},${col}_${DB2}"
+            MOD_SELECT="${MOD_SELECT}a.[$col] AS [${col}_${DB1}], b.[$col] AS [${col}_${DB2}]"
+          done <<< "$ALL_COLS"
+          Q3="SELECT $MOD_SELECT FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond"
+          log "     exporting modified ($MOD_CHECK_NUM rows) -> $(basename "$CSV3")"
+          export_csv "$DB1" "$Q3" "$CSV3" "$MOD_HEADER" || log "     CSV export failed for $CSV3"
         fi
       fi
     fi
@@ -459,6 +586,17 @@ fi
 log ""
 log "================================================================"
 log "REPORT SAVED: $REPORT"
+if [ ${#CSV_FILES_CREATED[@]} -gt 0 ]; then
+  log "CSV EXPORTS: ${#CSV_FILES_CREATED[@]} files in $CSV_DIR"
+  for f in "${CSV_FILES_CREATED[@]}"; do
+    log "  - $f ($(wc -l < "$f" | tr -d ' ') lines incl. header)"
+  done
+else
+  # Clean up empty CSV dir if no exports
+  rmdir "$CSV_DIR" 2>/dev/null || true
+  log "CSV EXPORTS: none (no truncated/large diffs)"
+fi
+log "================================================================"
 
 # ============================================================
 # GENERATE MARKDOWN REPORT
@@ -560,6 +698,21 @@ if [ "$HAS_BASELINE" = true ] && [ -s "$CHANGED_TABLES_FILE" ]; then
   if [ "$DIV_FOUND" = false ]; then
     echo "_No divergences detected._"
   fi
+  echo ""
+fi
+
+if [ ${#CSV_FILES_CREATED[@]} -gt 0 ]; then
+  echo "## CSV Exports"
+  echo ""
+  echo "Full row-level diffs exported to \`$CSV_DIR\` (one CSV per change type):"
+  echo ""
+  for f in "${CSV_FILES_CREATED[@]}"; do
+    lines=$(wc -l < "$f" | tr -d ' ')
+    data_rows=$((lines - 1))
+    echo "- \`$(basename "$f")\` — $data_rows rows (+ header), \`$f\`"
+  done
+  echo ""
+  echo "> Large tables (>500K) and truncated TOP-100 diffs are fully materialized here. Includes all columns; modified CSV has \`${DB1}\`/\`${DB2}\` column pairs."
   echo ""
 fi
 
