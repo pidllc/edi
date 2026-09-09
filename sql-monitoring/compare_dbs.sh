@@ -57,6 +57,25 @@ trap "rm -rf $TMPDIR" EXIT
 log() { echo "$1" | tee -a "$REPORT"; }
 run() { sqlcmd -S "$SERVER" -d "$1" -U "$USER" -P "$PASS" -C -Q "$2" -y 0 </dev/null 2>&1; }
 runfile() { sqlcmd -S "$SERVER" -d "$1" -U "$USER" -P "$PASS" -C -i "$2" -y 0 </dev/null 2>&1; }
+run_fast() { sqlcmd -S "$SERVER" -d "$1" -U "$USER" -P "$PASS" -C -Q "$2" -y 0 -t 30 </dev/null 2>&1; }
+get_checksum_cols() {
+  local _db="$1" _schema="$2" _table="$3"
+  run_fast "$_db" "SET NOCOUNT ON; SELECT STRING_AGG(CAST(QUOTENAME(c.name) AS NVARCHAR(MAX)), ',') WITHIN GROUP (ORDER BY c.column_id) FROM sys.columns c JOIN sys.types ty ON c.user_type_id=ty.user_type_id JOIN sys.tables t ON t.object_id=c.object_id JOIN sys.schemas s ON s.schema_id=t.schema_id WHERE s.name='$_schema' AND t.name='$_table' AND c.is_computed=0 AND ty.name NOT IN ('text','ntext','image','geography','geometry','hierarchyid')" | grep -v '^$' | grep -v -- '---' | grep -v 'rows affected' | grep -v "STRING_AGG" | tr -d ' ' | head -1 || true
+}
+table_checksum() {
+  local _db="$1" _schema="$2" _table="$3" _topN="$4" _cols="$5" _pk_order="$6"
+  local _q
+  if [ -z "$_cols" ]; then echo "0"; return; fi
+  if [ -n "$_topN" ] && [ "$_topN" -gt 0 ]; then
+    _q="SET NOCOUNT ON; SELECT ISNULL(CHECKSUM_AGG(BINARY_CHECKSUM($_cols)),0) FROM (SELECT TOP $_topN $_cols FROM [$_db].[$_schema].[$_table] ORDER BY $_pk_order) AS q"
+  else
+    _q="SET NOCOUNT ON; SELECT ISNULL(CHECKSUM_AGG(BINARY_CHECKSUM($_cols)),0) FROM [$_db].[$_schema].[$_table]"
+  fi
+  local _res
+  _res=$(run_fast "$_db" "$_q" | grep -E '^-?[0-9]+' | tr -d ' ' | head -1 || echo "0")
+  [ -z "$_res" ] && _res="0"
+  echo "$_res"
+}
 
 # --- CSV export helper ---
 # Usage: export_csv <src_db> <query> <outfile> <header_csv>
@@ -126,9 +145,16 @@ log "Mode: $([ "$NO_BASELINE" = true ] && echo 'no-baseline' || echo 'baseline-a
 log "================================================================"
 log ""
 
-# --- Capture current state ---
-runfile "$DB1" "$SCRIPT_DIR/22_snapshot_checksums.sql" > "$TMPDIR/cur1.txt"
-runfile "$DB2" "$SCRIPT_DIR/22_snapshot_checksums.sql" > "$TMPDIR/cur2.txt"
+# --- Capture current state (fast partition_stats, fallback to light COUNT) ---
+FAST_CNT_SQL="SET NOCOUNT ON; SELECT QUOTENAME(s.name)+'.'+QUOTENAME(t.name) AS tbl, ISNULL(SUM(ps.row_count),0) AS cnt, 0 AS chk FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id LEFT JOIN sys.dm_db_partition_stats ps ON ps.object_id=t.object_id AND ps.index_id IN (0,1) WHERE s.name NOT IN ('mon') GROUP BY s.name, t.name ORDER BY s.name, t.name"
+for _db in "$DB1" "$DB2"; do
+  _out="$TMPDIR/cur$([ "$_db" = "$DB1" ] && echo 1 || echo 2).txt"
+  run "$_db" "$FAST_CNT_SQL" > "$_out" 2>&1
+  if ! grep -q "dbo." "$_out" 2>/dev/null || [ "$(grep -c "dbo." "$_out")" -lt 10 ]; then
+    log "  Fast count failed for $_db, falling back to COUNT_BIG scan..."
+    runfile "$_db" "$SCRIPT_DIR/22_snapshot_counts_fast.sql" > "$_out"
+  fi
+done
 
 # --- Load baselines if available ---
 HAS_BASELINE=false
@@ -378,9 +404,36 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
     # Helper: sanitized table name for files
     SAFE_TBL="${SCHEMA}_${TNAME}"
 
+    # Hybrid helpers: checksum cols and PK order for incremental
+    CHK_COLS=$(get_checksum_cols "$DB1" "$SCHEMA" "$TNAME")
+    PKOrder=""
+    while IFS= read -r col; do
+      [ -z "$col" ] && continue
+      if [ -n "$PKOrder" ]; then PKOrder="$PKOrder, "; fi
+      PKOrder="${PKOrder}a.[$col]"
+    done <<< "$PK_COLS"
+    INCREMENTAL_HIT=false
+    SKIP_MODIFIED=false
+    if [ "$HAS_BASELINE" = true ]; then
+      b1_line_tmp=$(awk -v t="$tbl" '$1==t {print $0}' "$TMPDIR/base1.txt")
+      b1_cnt_tmp=$(echo "$b1_line_tmp" | awk '{print $2}')
+      b1_chk_tmp=$(echo "$b1_line_tmp" | awk '{print $3}')
+      if [ -n "$b1_chk_tmp" ] && [ "$b1_chk_tmp" != "0" ] && [ -n "$b1_cnt_tmp" ] && [ "$TBL_CNT" -gt "$b1_cnt_tmp" ] && [ -n "$CHK_COLS" ] && [ -n "$PKOrder" ]; then
+        cur_firstN_chk=$(table_checksum "$DB1" "$SCHEMA" "$TNAME" "$b1_cnt_tmp" "$CHK_COLS" "$PKOrder")
+        if [ "$cur_firstN_chk" = "$b1_chk_tmp" ]; then
+          INCREMENTAL_HIT=true
+          SKIP_MODIFIED=true
+          log "  (incremental hit: first $b1_cnt_tmp rows chk $b1_chk_tmp matches baseline - pure append)"
+        else
+          log "  (incremental miss: first $b1_cnt_tmp chk $cur_firstN_chk != baseline $b1_chk_tmp)"
+        fi
+      fi
+    fi
+
     # Track counts for CSV decision
     R1_COUNT=0; R2_COUNT=0; RD_COUNT=0
 
+    # Modified check may be skipped if incremental pure append
     # Interactive TOP-100 is skipped for large tables (>500K) to avoid timeouts; CSV will hold full diff
     if [ "$LARGE_TABLE" = true ]; then
       log "  (large table - interactive TOP 100 skipped, CSV will contain full diff)"
@@ -406,14 +459,19 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
         [ "$R2_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
       fi
 
-      # Modified rows (same PK, different data)
+      # Modified rows (same PK, different data) - skip if incremental pure append
       if [ -n "$DIFFCond" ]; then
-        RD=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'MODIFIED' AS change_type, $ABCols FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond" || true)
-        RD_COUNT=$(echo "$RD" | grep -c 'MODIFIED' || true)
-        if [ "$RD_COUNT" -gt 0 ]; then
-          log "  >> Modified rows (same PK, different data, up to 100):"
-          echo "$RD" | grep 'MODIFIED' | head -100 | while IFS= read -r line; do log "    $line"; done
-          [ "$RD_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
+        if [ "$SKIP_MODIFIED" = true ]; then
+          RD_COUNT=0
+          log "  >> Modified: skipped (incremental pure append)"
+        else
+          RD=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'MODIFIED' AS change_type, $ABCols FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond" || true)
+          RD_COUNT=$(echo "$RD" | grep -c 'MODIFIED' || true)
+          if [ "$RD_COUNT" -gt 0 ]; then
+            log "  >> Modified rows (same PK, different data, up to 100):"
+            echo "$RD" | grep 'MODIFIED' | head -100 | while IFS= read -r line; do log "    $line"; done
+            [ "$RD_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
+          fi
         fi
       fi
     else
@@ -441,16 +499,21 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
         log "  >> Rows only in $DB2: none"
       fi
 
-      # Column diffs
+      # Column diffs - skip if incremental pure append
       if [ -n "$DIFFCond" ]; then
-        RD=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'MODIFIED' AS change_type, $ABCols FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond" || true)
-        RD_COUNT=$(echo "$RD" | grep -c 'MODIFIED' || true)
-        if [ "$RD_COUNT" -gt 0 ]; then
-          log "  >> Modified rows (up to 100):"
-          echo "$RD" | grep 'MODIFIED' | head -100 | while IFS= read -r line; do log "    $line"; done
-          [ "$RD_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
+        if [ "$SKIP_MODIFIED" = true ]; then
+          RD_COUNT=0
+          log "  >> Modified: skipped (incremental pure append)"
         else
-          log "  >> Modified rows: none"
+          RD=$(run "$DB1" "SET NOCOUNT ON; SELECT TOP 100 'MODIFIED' AS change_type, $ABCols FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond" || true)
+          RD_COUNT=$(echo "$RD" | grep -c 'MODIFIED' || true)
+          if [ "$RD_COUNT" -gt 0 ]; then
+            log "  >> Modified rows (up to 100):"
+            echo "$RD" | grep 'MODIFIED' | head -100 | while IFS= read -r line; do log "    $line"; done
+            [ "$RD_COUNT" -eq 100 ] && log "     (! truncated at 100 - full list in CSV)"
+          else
+            log "  >> Modified rows: none"
+          fi
         fi
       fi
     fi
@@ -497,8 +560,10 @@ if [ -s "$CHANGED_TABLES_FILE" ] && [ "$SUMMARY_ONLY" = false ]; then
         export_csv "$DB2" "$Q2" "$CSV2" "$CSV_ALL_HEADER" || log "     CSV export failed for $CSV2"
       fi
 
-      # 3) Modified - full pairwise rows (if applicable)
-      if [ -n "$DIFFCond" ]; then
+      # 3) Modified - skip if incremental pure append
+      if [ "$SKIP_MODIFIED" = true ]; then
+        log "     modified CSV skipped (incremental pure append)"
+      elif [ -n "$DIFFCond" ]; then
         # Check if any modified exist at all (even if TOP100 was 0, large table may have mods)
         MOD_CHECK=$(run "$DB1" "SET NOCOUNT ON; SELECT COUNT(*) AS cnt FROM [${DB1}].[${SCHEMA}].[${TNAME}] a INNER JOIN [${DB2}].[${SCHEMA}].[${TNAME}] b ON $JOINCond WHERE $DIFFCond" | grep -E '[0-9]+' | grep -v "rows affected" | grep -v -- "--" | tr -d ' ' | head -1 || echo "0")
         # Strip non-digits
