@@ -264,3 +264,35 @@
 - sql-monitoring/19_xevents_setup_SA_ONLY.sql (SA deployment script)
 - sql-monitoring/19_read_xevents.sql (data reading queries)
 - edi850import.md (updated with XEvents comparison)
+
+# ============================================================
+# [2026-09-10] Minimal copy flask -> flask_minimal (SA)
+# ============================================================
+
+## User directive
+- Create minimalistic copy targeting ALL tables, keep items + customer related tables only.
+- Source: flask (51.6M rows, 588 tables), Target: flask_minimal, Method: BACKUP/RESTORE + truncate.
+
+## Actions taken
+1. Verified source flask: 588 tables, 51,667,711 rows, files F:\SQLDATA\flask.mdf (61GB) + flask_log.ldf (10GB). Only 1 FK (edisamples_detail), so TRUNCATE viable.
+2. Confirmed readwrite_user cannot CREATE DATABASE / RESTORE in master (guest, no dbcreator) - requires SA. SA creds from ~/workspace/saved_pass (sa/Andrewplugg07606dev).
+3. Created sql-monitoring/20_create_minimal_copy.sql (SA, master): BACKUP flask to E:\MSSQL\Data\flask_minimal.bak (INIT,COMPRESSION), DROP flask_minimal if exists, RESTORE with MOVE wfData->F:\SQLDATA\flask_minimal.mdf, wf_log->F:\SQLDATA\flask_minimal_log.ldf, SET RECOVERY SIMPLE. Proven: backup 5.6GB compressed, restore OK (state RESTORING->ONLINE).
+4. Created sql-monitoring/20b_purge_minimal_only.sql (SA, flask_minimal): inline teardown of monitoring (avoids audit flood), #preserve = 62 tables (customer family 15 tables, ivtf family 31 tables, code_sku/color/division etc 16 tables), DISABLE FK + triggers, loop TRUNCATE else DELETE for 524 non-preserved tables (0 failed), RESEED identities, RE-ENABLE FK WITH NOCHECK, verify.
+5. Executed 20b in flask_minimal as SA: B5 dropped 0 audit triggers (already clean after restore? actually had 587 from backup but teardown succeeded), B6 preserve 62 tables, B7 disabled constraints/triggers, B8 purged 524 tables (all TRUNCATE, 0 DELETE fallback, 0 FAILED), B9 reseeded, B11 verified:
+   - Preserved: ivtf_wh 229k, code_sku 104k, store 56k, ivtf 20k, billto 9k, customer 4.9k etc = 526,121 total rows (1% of original)
+   - Non-preserved >0 rows: 0 (all transactional: edi_po 315k->0, edi_invoice 2.1M->0, edi_997 251k->0, soheader 220k->0, pickdetail 589k->0, invdetail 581k->0, iWMS_Boxing 14M->0, packlist_LOG 8M->0 etc)
+6. Left WAREHOUSE/location/boxrule etc intact. Logs for preserved prefixes (ivtf_log etc) purged as intended (non-preserved).
+
+## Files created
+- sql-monitoring/20_create_minimal_copy.sql (full backup+restore+purge, SA master)
+- sql-monitoring/20b_purge_minimal_only.sql (purge-only, SA flask_minimal) - TESTED GREEN
+
+## Verification
+- flask_minimal ONLINE, 588 tables, 526k rows, 62 masters intact, 524 transactional empty, 0 failures.
+- To re-run: sqlcmd -S "192.168.168.106,2436" -d "master" -U "sa" -P '...' -C -i 20_create_minimal_copy.sql  OR  sqlcmd -S ... -d "flask_minimal" -U "sa" -P '...' -C -i 20b_purge_minimal_only.sql
+- To tune preserve list: edit INSERT INTO #preserve VALUES (...) in either file.
+
+## Notes
+- readwrite_user still cannot CREATE DATABASE; all minimal-copy creation must use SA.
+- Backup file retains full copy: E:\MSSQL\Data\flask_minimal.bak (also earlier flask_minimal_test.bak)
+- Monitoring (mon schema) removed from flask_minimal during purge; re-deploy with 13_deploy_full_monitoring.sql if audit needed on minimal.
