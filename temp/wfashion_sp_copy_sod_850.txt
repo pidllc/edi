@@ -1,0 +1,69 @@
+
+CREATE PROCEDURE [dbo].[sp_copy_salesorderdetail_850] (@realorderno int, @orderno_850 INT) 
+AS 
+DECLARE @style nchar(13)
+DECLARE @color nchar(12)
+DECLARE @royaltor nchar(10)
+DECLARE @price decimal 
+DECLARE @sodetail_id INT
+DECLARE @ll_count INT
+DECLARE @po1_IN nchar(20)
+DECLARE @po1_UP nchar(20)
+DECLARE @sku_sk nvarchar(20),@sku_cb nchar(20),@sku_in nchar(20)
+
+
+DECLARE SODETAIL_INSERT CURSOR FOR
+select style, color, isnull(royaltor,''),price, sodetail_id, isnull(po1_IN,''), isnull(PO1_UP,''), isnull(sku_cb,''), isnull(sku_in,'') FROM sodetail_850 WHERE orderno = @orderno_850
+OPEN sodetail_insert 
+FETCH sodetail_insert INTO @style, @color, @royaltor,@price, @sodetail_id ,@po1_in, @po1_up,@sku_cb,@sku_in
+
+While @@FETCH_STATUS = 0 
+BEGIN
+
+	SELECT @ll_count = count(*) FROM sodetail WHERE orderno=@realorderno AND style=@style AND color =@color AND isnull(royaltor,'') =@royaltor AND price = @price AND isnull(po1_IN,'') = @po1_IN AND isnull(PO1_UP,'') = @po1_up
+	AND isnull(sku_cb,'') = @sku_cb AND isnull(sku_in,'') = @sku_in
+
+	if @ll_count = 0 
+	BEGIN 
+	INSERT INTO [dbo].[sodetail]
+			   ([orderno],[line],[style],[color],[qty1],[qty2],[qty3],[qty4],[qty5],[qty6],[qty7],[qty8],[qty9],[price],[memo],[commpcnt1],[commpcnt2],[alloc_qty1],[alloc_qty2],[alloc_qty3],[alloc_qty4],[alloc_qty5],[alloc_qty6]
+			   ,[alloc_qty7],[alloc_qty8],[alloc_qty9],[shipped_qty1],[shipped_qty2],[shipped_qty3],[shipped_qty4],[shipped_qty5],[shipped_qty6],[shipped_qty7],[shipped_qty8],[shipped_qty9],[closed],[setid],[cutno],[cut_qty1]
+			   ,[cut_qty2],[cut_qty3],[cut_qty4],[cut_qty5],[cut_qty6],[cut_qty7],[cut_qty8],[cut_qty9],[alloc_date],[pt_printdate],[det_canceldate],[ordered_style],[ordered_color],[pick_qty1],[pick_qty2],[pick_qty3],[pick_qty4]
+			   ,[pick_qty5],[pick_qty6],[pick_qty7],[pick_qty8],[pick_qty9],[royaltor],[royalty],[qty10],[qty11],[qty12],[alloc_qty10],[alloc_qty11],[alloc_qty12],[shipped_qty10],[shipped_qty11],[shipped_qty12],[cut_qty10]
+			   ,[cut_qty11],[cut_qty12],[pick_qty10],[pick_qty11],[pick_qty12],[currency],[exchange_rate],[warehouse],[pick_hold],[alloc_wh],[WH_transferno],[pick_no],[cancel_reason],[sodetail_user],[cancelreason_date],[reorder]
+			   ,[prepack_code],[reforderno],[ticket_price],[PO1_UP],[PO1_IN],[po1_cb],[bulk_orderno],[cutdetail_id],[actual_cost],[pono],[podetail_id],[sku_sk],[PID_memo],[pack_sum],[discpercent],[orig_price],[sku_cb],[seqnosku]
+			   ,[label],[carton_type],[sku_in],[edi_unit],[line_mode],[msn_no],[sln_pl],[prepack_qty],[po1_iz])
+	(SELECT @realorderno,[line],[style],[color],[qty1],[qty2],[qty3],[qty4],[qty5],[qty6],[qty7],[qty8],[qty9],[price],[memo],[commpcnt1],[commpcnt2],[alloc_qty1],[alloc_qty2],[alloc_qty3],[alloc_qty4],[alloc_qty5],[alloc_qty6]
+			   ,[alloc_qty7],[alloc_qty8],[alloc_qty9],[shipped_qty1],[shipped_qty2],[shipped_qty3],[shipped_qty4],[shipped_qty5],[shipped_qty6],[shipped_qty7],[shipped_qty8],[shipped_qty9],[closed],[setid],[cutno],[cut_qty1]
+			   ,[cut_qty2],[cut_qty3],[cut_qty4],[cut_qty5],[cut_qty6],[cut_qty7],[cut_qty8],[cut_qty9],[alloc_date],[pt_printdate],[det_canceldate],[ordered_style],[ordered_color],[pick_qty1],[pick_qty2],[pick_qty3],[pick_qty4]
+			   ,[pick_qty5],[pick_qty6],[pick_qty7],[pick_qty8],[pick_qty9],[royaltor],[royalty],[qty10],[qty11],[qty12],[alloc_qty10],[alloc_qty11],[alloc_qty12],[shipped_qty10],[shipped_qty11],[shipped_qty12],[cut_qty10]
+			   ,[cut_qty11],[cut_qty12],[pick_qty10],[pick_qty11],[pick_qty12],[currency],[exchange_rate],[warehouse],[pick_hold],[alloc_wh],[WH_transferno],[pick_no],[cancel_reason],[sodetail_user],[cancelreason_date],[reorder]
+			   ,[prepack_code],[reforderno],[ticket_price],[PO1_UP],[PO1_IN],[po1_cb],[bulk_orderno],[cutdetail_id],[actual_cost],[pono],[podetail_id],[sku_sk],[PID_memo],[pack_sum],[discpercent],[orig_price],[sku_cb],[seqnosku]
+			   ,[label],[carton_type],[sku_in],[edi_unit],[line_mode],[msn_no],[sln_pl],[prepack_qty],[po1_iz]
+		FROM sodetail_850 sd WHERE sd.orderno =@orderno_850 AND sd.sodetail_id = @sodetail_id)
+	--	PRINT 'INSERT' +convert(char(10), @sodetail_id) for debugging purpose
+	END
+	ELSE
+		BEGIN
+		UPDATE sodetail SET [line]=sd.[line],[style]=sd.[style],[color]=sd.[color],[qty1]=sd.[qty1],[qty2]=sd.[qty2],[qty3]=sd.[qty3],[qty4]=sd.[qty4],[qty5]=sd.[qty5],[qty6]=sd.[qty6],[qty7]=sd.[qty7],[qty8]=sd.[qty8],[qty9]=sd.[qty9]
+			   ,[price]=sd.[price],[memo]=sd.[memo],[commpcnt1]=sd.[commpcnt1],[commpcnt2]=sd.[commpcnt2],[closed]=sd.[closed],[setid]=sd.[setid],[det_canceldate]=sd.[det_canceldate],[royaltor]=sd.[royaltor],[royalty]=sd.[royalty] ,[qty10]=sd.[qty10]
+			   ,[qty11]=sd.[qty11],[qty12]=sd.[qty12],[currency]=sd.[currency],[exchange_rate]=sd.[exchange_rate],[warehouse]=sd.[warehouse],[pick_hold]=sd.[pick_hold],[alloc_wh]=sd.[alloc_wh],[pick_no]=sd.[pick_no],[cancel_reason]=sd.[cancel_reason]
+			   ,[sodetail_user]=sd.[sodetail_user],[cancelreason_date]=sd.[cancelreason_date],[reorder]=sd.[reorder],[prepack_code]=sd.[prepack_code],[reforderno]=sd.[reforderno],[ticket_price]=sd.[ticket_price],[PO1_UP]=sd.[PO1_UP],[PO1_IN]=sd.[PO1_IN]
+			   ,[po1_cb]=sd.[po1_cb],[bulk_orderno]=sd.[bulk_orderno],[pono]=sd.[pono],[podetail_id]=sd.[podetail_id],[sku_sk]=sd.[sku_sk],[PID_memo]=sd.[PID_memo],[pack_sum]=sd.[pack_sum],[discpercent]=sd.[discpercent],[sodetail_hfc_id]=sd.[sodetail_hfc_id]
+			   ,[sku_cb]=sd.[sku_cb],[seqnosku]=sd.[seqnosku],[label]=sd.[label],[carton_type]=sd.[carton_type],[sku_in]=sd.[sku_in],[edi_unit]=sd.[edi_unit],[line_mode]=sd.[line_mode],[msn_no]=sd.[msn_no],[sln_pl]=sd.[sln_pl],[prepack_qty]=sd.[prepack_qty]
+			   ,[po1_iz]=sd.[po1_iz] 
+		FROM sodetail_850 sd JOIN sodetail ON 
+		sodetail.style = sd.style AND sodetail.color = sd.color AND isnull(sodetail.royaltor,'') = isnull(sd.royaltor,'')
+		AND sodetail.price = sd.price AND isnull(sodetail.po1_IN,'') = isnull(sd.po1_in,'') AND isnull(sodetail.po1_up,'') = isnull(sd.po1_up,'')
+		AND isnull(sodetail.sku_cb,'') = isnull(sd.sku_cb,'') AND isnull(sodetail.sku_in,'') = isnull(sd.sku_in,'')
+		WHERE sd.sodetail_id = @sodetail_id AND sodetail.orderno = @realorderno
+	--	PRINT 'UPDATE' + convert(char(10), @sodetail_id) for debugging purpose
+
+		END
+	FETCH sodetail_insert INTO @style, @color, @royaltor,@price, @sodetail_id ,@po1_in, @po1_up,@sku_cb,@sku_in
+END
+CLOSE SODETAIL_INSERT
+DEALLOCATE SODETAIL_INSERT
+
+
+(1 rows affected)

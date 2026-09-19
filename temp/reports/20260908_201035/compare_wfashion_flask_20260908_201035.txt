@@ -1,0 +1,101 @@
+================================================================
+DATABASE COMPARISON REPORT
+Date: 2026-09-08 20:10:35
+Databases: wfashion vs flask
+Server: 192.168.168.106,2436
+Mode: baseline-aware
+================================================================
+
+--- BASELINE SNAPSHOTS ---
+  wfashion baseline: /Users/tarun/workspace/personal/edi/temp/snapshot_wfashion.txt (588 tables)
+  flask baseline: /Users/tarun/workspace/personal/edi/temp/snapshot_flask.txt (588 tables)
+
+--- TABLE LIST ---
+  wfashion: 588 tables
+  flask: 588 tables
+  Table lists: IDENTICAL
+
+--- TRIGGER LIST ---
+  Trigger lists: IDENTICAL
+
+================================================================
+CHANGE ANALYSIS
+================================================================
+
+--- DATA CHANGES ---
+
+  [dbo].[edi_po]
+    wfashion: 315906 -> 315928 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -22
+
+  [dbo].[edi_po_sku_qty]
+    wfashion: 3244303 -> 3245628 rows (baseline chk: 0, current: 0)
+    flask: 3244303 -> 3245628 rows (baseline chk: 0, current: 0)
+
+  [dbo].[edilog]
+    wfashion: 58863 -> 58864 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -1
+
+  [dbo].[sodetail]
+    wfashion: 624101 -> 627267 rows (baseline chk: 0, current: 0)
+    flask: 624101 -> 625426 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -1841
+
+  [dbo].[sodetail_log]
+    wfashion: 632596 -> 635762 rows (baseline chk: 0, current: 0)
+    flask: 632596 -> 633921 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -1841
+
+  [dbo].[soheader]
+    wfashion: 223130 -> 223729 rows (baseline chk: 0, current: 0)
+    flask: 223130 -> 223152 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -577
+
+  [dbo].[soheader_log]
+    wfashion: 812895 -> 813494 rows (baseline chk: 0, current: 0)
+    flask: 812895 -> 812917 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -577
+
+  [dbo].[wfuser_log]
+    wfashion: 56932 -> 56936 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -4
+
+================================================================
+ROW-LEVEL CHANGES (up to 100 per table - full diff in CSV if truncated)
+================================================================
+CSV output dir: /Users/tarun/workspace/personal/edi/temp/reports/20260908_201035/csv
+
+  === [dbo].[edi_po] ===
+  >> New rows in wfashion (not in flask, up to 100):
+    NEW_IN_wfashion 326677
+    NEW_IN_wfashion 326678
+    NEW_IN_wfashion 326679
+    NEW_IN_wfashion 326680
+    NEW_IN_wfashion 326681
+    NEW_IN_wfashion 326682
+    NEW_IN_wfashion 326683
+    NEW_IN_wfashion 326684
+    NEW_IN_wfashion 326685
+    NEW_IN_wfashion 326686
+    NEW_IN_wfashion 326687
+    NEW_IN_wfashion 326688
+    NEW_IN_wfashion 326689
+    NEW_IN_wfashion 326690
+    NEW_IN_wfashion 326691
+    NEW_IN_wfashion 326692
+    NEW_IN_wfashion 326693
+    NEW_IN_wfashion 326694
+    NEW_IN_wfashion 326695
+    NEW_IN_wfashion 326696
+    NEW_IN_wfashion 326697
+    NEW_IN_wfashion 326698
+  >> CSV export for [dbo].[edi_po] -> /Users/tarun/workspace/personal/edi/temp/reports/20260908_201035/csv/
+     exporting new_in_wfashion (22 rows) -> dbo_edi_po__new_in_wfashion.csv
+
+  === [dbo].[edi_po_sku_qty] ===
+  (large table: 3245628 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[edi_po_sku_qty] -> /Users/tarun/workspace/personal/edi/temp/reports/20260908_201035/csv/
+     exporting new_in_wfashion (1179 rows) -> dbo_edi_po_sku_qty__new_in_wfashion.csv
+     exporting new_in_flask (1179 rows) -> dbo_edi_po_sku_qty__new_in_flask.csv
+     exporting modified (146 rows) -> dbo_edi_po_sku_qty__modified.csv

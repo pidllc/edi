@@ -1,0 +1,89 @@
+================================================================
+DATABASE COMPARISON REPORT
+Date: 2026-09-08 19:55:47
+Databases: wfashion vs flask
+Server: 192.168.168.106,2436
+Mode: baseline-aware
+================================================================
+
+--- BASELINE SNAPSHOTS ---
+  wfashion baseline: /Users/tarun/workspace/personal/edi/temp/snapshot_wfashion.txt (588 tables)
+  flask baseline: /Users/tarun/workspace/personal/edi/temp/snapshot_flask.txt (588 tables)
+
+--- TABLE LIST ---
+  wfashion: 588 tables
+  flask: 588 tables
+  Table lists: IDENTICAL
+
+--- TRIGGER LIST ---
+  Trigger lists: IDENTICAL
+
+================================================================
+CHANGE ANALYSIS
+================================================================
+
+--- DATA CHANGES ---
+
+  [dbo].[edi_po]
+    wfashion: 315906 -> 315928 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -22
+
+  [dbo].[edi_po_sku_qty]
+    wfashion: 3244303 -> 3245628 rows (baseline chk: 0, current: 0)
+    flask: 3244303 -> 3245628 rows (baseline chk: 0, current: 0)
+
+  [dbo].[edilog]
+    wfashion: 58863 -> 58864 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -1
+
+  [dbo].[sodetail]
+    wfashion: 624101 -> 627267 rows (baseline chk: 0, current: 0)
+    flask: 624101 -> 625426 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -1841
+
+  [dbo].[sodetail_log]
+    wfashion: 632596 -> 635762 rows (baseline chk: 0, current: 0)
+    flask: 632596 -> 633921 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -1841
+
+  [dbo].[soheader]
+    wfashion: 223130 -> 223729 rows (baseline chk: 0, current: 0)
+    flask: 223130 -> 223152 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -577
+
+  [dbo].[soheader_log]
+    wfashion: 812895 -> 813494 rows (baseline chk: 0, current: 0)
+    flask: 812895 -> 812917 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -577
+
+  [dbo].[wfuser_log]
+    wfashion: 56932 -> 56935 rows (baseline chk: 0, current: 0)
+    Delta (wfashion vs flask): -3
+
+
+================================================================
+SUMMARY
+================================================================
+
+  Databases compared:     wfashion vs flask
+  Tables in wfashion:        588
+  Tables in flask:        588
+  Tables only in wfashion:   0
+  Tables only in flask:   0
+  Tables with changes:   8
+
+  DIVERGENCES (wfashion vs flask row count mismatch):
+    [dbo].[edi_po]: 315928 vs 315906 (delta: -22)
+    [dbo].[edilog]: 58864 vs 58863 (delta: -1)
+    [dbo].[sodetail]: 627267 vs 625426 (delta: -1841)
+    [dbo].[sodetail_log]: 635762 vs 633921 (delta: -1841)
+    [dbo].[soheader]: 223729 vs 223152 (delta: -577)
+    [dbo].[soheader_log]: 813494 vs 812917 (delta: -577)
+    [dbo].[wfuser_log]: 56935 vs 56932 (delta: -3)
+
+================================================================
+REPORT SAVED: /Users/tarun/workspace/personal/edi/temp/reports/20260908_195547/compare_wfashion_flask_20260908_195547.txt
+CSV EXPORTS: none (no truncated/large diffs)
+================================================================
+MARKDOWN REPORT SAVED: /Users/tarun/workspace/personal/edi/temp/reports/20260908_195547/compare_wfashion_flask_20260908_195547.md
+================================================================

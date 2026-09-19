@@ -1,0 +1,62 @@
+
+CREATE PROCEDURE [dbo].[sp_copy_salesorder_850] (@realorderno int, @orderno_850 int)
+AS
+DECLARE @ll_count INT 
+
+SELECT @ll_count = count(*) from soheader WHERE orderno = @realorderno
+
+if @ll_count = 0 
+	BEGIN 
+	INSERT INTO [dbo].[soheader]([orderno],[orderdate],[shipdate],[canceldate],[customer],[blname],[bladdr1],[bladdr2],[blcity],[blstate],[blzip],[store],[shname],[shaddr1],[shaddr2],[shcity],[shstate],[shzip],[phone]
+           ,[fax],[salesrep1],[commpcnt1],[salesrep2],[commpcnt2],[custpo],[subtotal],[misc],[total],[terms],[shipvia],[user1],[user2],[user3],[memo],[closed],[pricelevel],[taxrate],[shdept],[linecount],[inhouse_memo]
+           ,[memo_code],[user4],[edistatus],[edibatch],[edidate],[alloc_percent],[userid],[user_date],[user5],[bulk_orderno],[discountdays],[discountrate],[invoice_count],[country],[shcountry],[fob],[billto],[season]
+           ,[grp_header],[factored],[shipto_store],[distri],[warehouse],[freight_pmtmode],[quality],[factor_approval_old],[shipped],[allocated],[picked],[bulk_order],[box_mode],[royaltor],[currency],[releaseno],[hanging_shipment]
+           ,[sent_855_factor],[ctrl_no_factor],[factor_amount],[factor_date],[factor_approval],[exchange_rate],[cancel_reason],[cust_div],[x_warehouse_date],[request_date],[boxes],[weight],[dcname],[dcaddr1],[dcaddr2]
+           ,[dccity],[dcstate],[dczip],[order_status],[refno],[FOB_LOCATION],[FOB_SMP],[PRE_DISTRO],[code_label],[LABEL],[factor_batchno],[miscdesc],[count870],[reforderno],[CREATED_USER],[CREATED_DATE],[UPDATED_USER]
+           ,[UPDATED_DATE],[edi_id],[ordertype],[prepay_refno],[prepay_paidamt],[prepay_pmt_code],[salesrep3],[comm_rate3],[salesrep4],[comm_rate4],[prepay_balance],[payment_commission],[merchandiser],[enter_tktprice]
+           ,[prepay_date],[REF_PHC],[vendorno],[so_invoice_disc_percent],[Buyer],[ups_shipper],[creditcard_name],[creditcard_name2],[credit_cardno2],[credit_cardno],[creditcard_csv],[creditcard_csv2],[credit_expdate]
+           ,[credit_expdate2],[creditcard_addr],[creditcard_addr2],[creditcard_zip],[creditcard_zip2],[cc_troutD],[cc_troutD2],[cc_auth],[cc_auth2],[cc_chargeddate],[cc_chargeddate2],[cc_chargedamount],[cc_chargedamount2]
+           ,[blind_order],[completeshiponly],[device_refno],[facility_id],[line_mode],[ref_event],[product_grp],[buyer_phone],[EDI_3PL])
+    ( SELECT @realorderno,[orderdate],[shipdate],[canceldate],[customer],[blname],[bladdr1],[bladdr2],[blcity],[blstate],[blzip],[store],[shname],[shaddr1],[shaddr2],[shcity],[shstate],[shzip],[phone]
+           ,[fax],[salesrep1],[commpcnt1],[salesrep2],[commpcnt2],[custpo],[subtotal],[misc],[total],[terms],[shipvia],[user1],[user2],[user3],[memo],[closed],[pricelevel],[taxrate],[shdept],[linecount],[inhouse_memo]
+           ,[memo_code],[user4],[edistatus],[edibatch],[edidate],[alloc_percent],[userid],[user_date],[user5],[bulk_orderno],[discountdays],[discountrate],[invoice_count],[country],[shcountry],[fob],[billto],[season]
+           ,[grp_header],[factored],[shipto_store],[distri],[warehouse],[freight_pmtmode],[quality],[factor_approval_old],[shipped],[allocated],[picked],[bulk_order],[box_mode],[royaltor],[currency],[releaseno],[hanging_shipment]
+           ,[sent_855_factor],[ctrl_no_factor],[factor_amount],[factor_date],[factor_approval],[exchange_rate],[cancel_reason],[cust_div],[x_warehouse_date],[request_date],[boxes],[weight],[dcname],[dcaddr1],[dcaddr2]
+           ,[dccity],[dcstate],[dczip],[order_status],[refno],[FOB_LOCATION],[FOB_SMP],[PRE_DISTRO],[code_label],[LABEL],[factor_batchno],[miscdesc],[count870],@orderno_850,[CREATED_USER],[CREATED_DATE],[UPDATED_USER]
+           ,[UPDATED_DATE],[edi_id],[ordertype],[prepay_refno],[prepay_paidamt],[prepay_pmt_code],[salesrep3],[comm_rate3],[salesrep4],[comm_rate4],[prepay_balance],[payment_commission],[merchandiser],[enter_tktprice]
+           ,[prepay_date],[REF_PHC],[vendorno],[so_invoice_disc_percent],[Buyer],[ups_shipper],[creditcard_name],[creditcard_name2],[credit_cardno2],[credit_cardno],[creditcard_csv],[creditcard_csv2],[credit_expdate]
+           ,[credit_expdate2],[creditcard_addr],[creditcard_addr2],[creditcard_zip],[creditcard_zip2],[cc_troutD],[cc_troutD2],[cc_auth],[cc_auth2],[cc_chargeddate],[cc_chargeddate2],[cc_chargedamount],[cc_chargedamount2]
+           ,[blind_order],[completeshiponly],[device_refno],[facility_id],[line_mode],[ref_event],[product_grp],[buyer_phone],[EDI_3PL] FROM soheader_850 WHERE orderno = @orderno_850)
+END 
+ELSE
+	BEGIN
+		
+	UPDATE soheader SET [orderdate] = sd.orderdate,[shipdate]=sd.shipdate,[canceldate]=sd.canceldate,[customer]=sd.customer,[blname]=sd.blname,[bladdr1]=sd.bladdr1,[bladdr2]=sd.bladdr2,[blcity]=sd.blcity,
+		[blstate]=sd.blstate,[blzip]=sd.blzip,[store]=sd.store,[shname]=sd.shname,[shaddr1]=sd.shaddr1,[shaddr2]=sd.shaddr2,[shcity]=sd.shcity,[shstate]=sd.shstate,[shzip]=sd.shzip,[phone]=sd.phone
+        ,[fax]=sd.fax,[salesrep1]=sd.salesrep1,[commpcnt1]=sd.commpcnt1,[salesrep2]=sd.salesrep2,[commpcnt2]=sd.commpcnt2,[custpo]=sd.[custpo],[subtotal]=sd.[subtotal],[misc]=sd.[misc],[total]=sd.[total],
+		[terms]=sd.[terms],[shipvia]=sd.[shipvia],[user1]=sd.[user1],[user2]=sd.[user2],[user3]=sd.[user3],[memo]=sd.[memo],[closed]=sd.[closed],[pricelevel]=sd.[pricelevel],[taxrate]=sd.[taxrate],[shdept]=sd.[shdept],
+		[linecount]=sd.[linecount],[inhouse_memo]=sd.[inhouse_memo],[memo_code]=sd.[memo_code],[user4]=sd.[user4],[edistatus]=sd.[edistatus],[edibatch]=sd.[edibatch],[edidate]=sd.[edidate],[alloc_percent]=sd.[alloc_percent],
+		[userid]=sd.[userid],[user_date]=sd.[user_date],[user5]=sd.[user5],[bulk_orderno]=sd.[bulk_orderno],[discountdays]=sd.[discountdays],[discountrate]=sd.[discountrate],[invoice_count]=sd.[invoice_count],[country]=sd.[country],
+		[shcountry]=sd.[shcountry],[fob]=sd.[fob],[billto]=sd.[billto],[season]=sd.[season],[grp_header]=sd.[grp_header],[factored]=sd.[factored],[shipto_store]=sd.[shipto_store],[distri]=sd.[distri],[warehouse]=sd.[warehouse],
+		[freight_pmtmode]=sd.[freight_pmtmode],[quality]=sd.[quality],[factor_approval_old]=sd.[factor_approval_old],[shipped]=sd.[shipped],[allocated]=sd.[allocated],[picked]=sd.[picked],[bulk_order]=sd.[bulk_order],[box_mode]=sd.[box_mode],
+		[royaltor]=sd.[royaltor],[currency]=sd.[currency],[releaseno]=sd.[releaseno],[hanging_shipment]=sd.[hanging_shipment],[sent_855_factor]=sd.[sent_855_factor],[ctrl_no_factor]=sd.[ctrl_no_factor],[factor_amount]=sd.[factor_amount],
+		[factor_date]=sd.[factor_date],[factor_approval]=sd.[factor_approval],[exchange_rate]=sd.[exchange_rate],[cancel_reason]=sd.[cancel_reason],[cust_div]=sd.[cust_div],[x_warehouse_date]=sd.[x_warehouse_date],[request_date]=sd.[request_date],
+		[boxes]=sd.[boxes],[weight]=sd.[weight],[dcname]=sd.[dcname],[dcaddr1]=sd.[dcaddr1],[dcaddr2]=sd.[dcaddr2],[dccity]=sd.[dccity],[dcstate]=sd.[dcstate],[dczip]=sd.[dczip],[order_status]=sd.[order_status],[refno]=sd.[refno],[FOB_LOCATION]=sd.[FOB_LOCATION],
+		[FOB_SMP]=sd.[FOB_SMP],[PRE_DISTRO]=sd.[PRE_DISTRO],[code_label]=sd.[code_label],[LABEL]=sd.[LABEL],[factor_batchno]=sd.[factor_batchno],[miscdesc]=sd.[miscdesc],[count870]=sd.[count870],[reforderno]=@orderno_850,[CREATED_USER]=sd.[CREATED_USER],
+		[CREATED_DATE]=sd.[CREATED_DATE],[UPDATED_USER]=sd.[UPDATED_USER],[UPDATED_DATE]=sd.[UPDATED_DATE],[edi_id]=sd.[edi_id],[ordertype]=sd.[ordertype],[prepay_refno]=sd.[prepay_refno],[prepay_paidamt]=sd.[prepay_paidamt],[prepay_pmt_code]=sd.[prepay_pmt_code],[salesrep3]=sd.[salesrep3],
+		[comm_rate3]=sd.[comm_rate3],[salesrep4]=sd.[salesrep4],[comm_rate4]=sd.[comm_rate4],[prepay_balance]=sd.[prepay_balance],[payment_commission]=sd.[payment_commission],[merchandiser]=sd.[merchandiser],[enter_tktprice]=sd.[enter_tktprice],[prepay_date]=sd.[prepay_date],
+		[REF_PHC]=sd.[REF_PHC],[vendorno]=sd.[vendorno],[so_invoice_disc_percent]=sd.[so_invoice_disc_percent],[Buyer]=sd.[Buyer],[ups_shipper]=sd.[ups_shipper],[creditcard_name]=sd.[creditcard_name],[creditcard_name2]=sd.[creditcard_name2],[credit_cardno2]=sd.[credit_cardno2],
+		[credit_cardno]=sd.[credit_cardno],[creditcard_csv]=sd.[creditcard_csv],[creditcard_csv2]=sd.[creditcard_csv2],[credit_expdate]=sd.[credit_expdate],[credit_expdate2]=sd.[credit_expdate2],[creditcard_addr]=sd.[creditcard_addr],[creditcard_addr2]=sd.[creditcard_addr2],
+		[creditcard_zip]=sd.[creditcard_zip],[creditcard_zip2]=sd.[creditcard_zip2],[cc_troutD]=sd.[cc_troutD],[cc_troutD2]=sd.[cc_troutD2],[cc_auth]=sd.[cc_auth],[cc_auth2]=sd.[cc_auth2],[cc_chargeddate]=sd.[cc_chargeddate],[cc_chargeddate2]=sd.[cc_chargeddate2],
+		[cc_chargedamount]=sd.[cc_chargedamount],[cc_chargedamount2]=sd.[cc_chargedamount2],[blind_order]=sd.[blind_order],[completeshiponly]=sd.[completeshiponly],[device_refno]=sd.[device_refno],[facility_id]=sd.[facility_id],[line_mode]=sd.[line_mode],
+		[ref_event]=sd.[ref_event],[product_grp]=sd.[product_grp],[buyer_phone]=sd.[buyer_phone],[EDI_3PL]=sd.[EDI_3PL]
+
+	FROM soheader_850 sd WHERE sd.orderno = @orderno_850 AND soheader.orderno = @realorderno
+
+	END
+Execute sp_copy_salesorderdetail_850 @realorderno, @orderno_850
+
+UPDATE soheader_850 set reforderno = @realorderno WHERE orderno = @orderno_850
+
+
+(1 rows affected)

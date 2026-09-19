@@ -1,0 +1,1287 @@
+================================================================
+DATABASE COMPARISON REPORT
+Date: 2026-09-16 10:54:08
+Databases: wfashion vs flask
+Server: 192.168.168.106,2436
+Mode: baseline-aware
+================================================================
+
+--- BASELINE SNAPSHOTS ---
+  wfashion baseline: /Users/tarun/workspace/personal/edi/temp/snapshot_wfashion.txt (588 tables)
+  flask baseline: /Users/tarun/workspace/personal/edi/temp/snapshot_flask.txt (588 tables)
+
+--- TABLE LIST ---
+  wfashion: 588 tables
+  flask: 588 tables
+  Table lists: IDENTICAL
+
+--- TRIGGER LIST ---
+  Trigger lists: IDENTICAL
+
+================================================================
+CHANGE ANALYSIS
+================================================================
+
+--- DATA CHANGES ---
+
+  [dbo].[aa_ups]
+    wfashion: 37 -> 37 rows (baseline chk: -144682044, current: 0)
+    flask: 37 -> 37 rows (baseline chk: -144682044, current: 0)
+
+  [dbo].[aa_ups_in]
+    wfashion: 35654 -> 35654 rows (baseline chk: -1024183749, current: 0)
+    flask: 35654 -> 35654 rows (baseline chk: -1024183749, current: 0)
+
+  [dbo].[aa_ups_pick]
+    wfashion: 685943 -> 685943 rows (baseline chk: 2060315271, current: 0)
+    flask: 685943 -> 685943 rows (baseline chk: 2060315271, current: 0)
+
+  [dbo].[acc_calendar]
+    wfashion: 4 -> 4 rows (baseline chk: 15328, current: 0)
+    flask: 4 -> 4 rows (baseline chk: 15328, current: 0)
+
+  [dbo].[activity_log]
+    wfashion: 35604 -> 35604 rows (baseline chk: 1970546483, current: 0)
+    flask: 35604 -> 35604 rows (baseline chk: 1970546483, current: 0)
+
+  [dbo].[Allocation_fields]
+    wfashion: 24 -> 24 rows (baseline chk: -1290303168, current: 0)
+    flask: 24 -> 24 rows (baseline chk: -1290303168, current: 0)
+
+  [dbo].[Amazon_Product_Schema]
+    wfashion: 304 -> 304 rows (baseline chk: 269008492, current: 0)
+    flask: 304 -> 304 rows (baseline chk: 269008492, current: 0)
+
+  [dbo].[aphead]
+    wfashion: 19 -> 19 rows (baseline chk: 114588451, current: 0)
+    flask: 19 -> 19 rows (baseline chk: 114588451, current: 0)
+
+  [dbo].[arcash]
+    wfashion: 18 -> 18 rows (baseline chk: 1366742978, current: 0)
+    flask: 18 -> 18 rows (baseline chk: 1366742978, current: 0)
+
+  [dbo].[archeck]
+    wfashion: 991 -> 991 rows (baseline chk: 76632905, current: 0)
+    flask: 991 -> 991 rows (baseline chk: 76632905, current: 0)
+
+  [dbo].[AVSCODE]
+    wfashion: 14 -> 14 rows (baseline chk: 446191735, current: 0)
+    flask: 14 -> 14 rows (baseline chk: 446191735, current: 0)
+
+  [dbo].[bartender]
+    wfashion: 614 -> 614 rows (baseline chk: -903279440, current: 0)
+    flask: 614 -> 614 rows (baseline chk: -903279440, current: 0)
+
+  [dbo].[bartender_bysize]
+    wfashion: 4 -> 4 rows (baseline chk: -39231473, current: 0)
+    flask: 4 -> 4 rows (baseline chk: -39231473, current: 0)
+
+  [dbo].[bartender_bysize48]
+    wfashion: 773613 -> 773613 rows (baseline chk: -256457656, current: 0)
+    flask: 773613 -> 773613 rows (baseline chk: -256457656, current: 0)
+
+  [dbo].[bartender_upc]
+    wfashion: 10 -> 10 rows (baseline chk: -1300106749, current: 0)
+    flask: 10 -> 10 rows (baseline chk: -1300106749, current: 0)
+
+  [dbo].[bartender2]
+    wfashion: 614 -> 614 rows (baseline chk: -1764667804, current: 0)
+    flask: 614 -> 614 rows (baseline chk: -1764667804, current: 0)
+
+  [dbo].[bartender3]
+    wfashion: 614 -> 614 rows (baseline chk: -1060513210, current: 0)
+    flask: 614 -> 614 rows (baseline chk: -1060513210, current: 0)
+
+  [dbo].[bartender4]
+    wfashion: 112 -> 112 rows (baseline chk: -1811769968, current: 0)
+    flask: 112 -> 112 rows (baseline chk: -1811769968, current: 0)
+
+  [dbo].[billto]
+    wfashion: 9446 -> 9446 rows (baseline chk: 1614812228, current: 0)
+    flask: 9446 -> 9446 rows (baseline chk: 1614812228, current: 0)
+
+  [dbo].[body]
+    wfashion: 3 -> 3 rows (baseline chk: 856293900, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 856293900, current: 0)
+
+  [dbo].[bol]
+    wfashion: 26032 -> 26032 rows (baseline chk: -992483413, current: 0)
+    flask: 26032 -> 26032 rows (baseline chk: -992483413, current: 0)
+
+  [dbo].[bol_carton]
+    wfashion: 602 -> 602 rows (baseline chk: -1601541380, current: 0)
+    flask: 602 -> 602 rows (baseline chk: -1601541380, current: 0)
+
+  [dbo].[boxrule]
+    wfashion: 21 -> 21 rows (baseline chk: 1391983949, current: 0)
+    flask: 21 -> 21 rows (baseline chk: 1391983949, current: 0)
+
+  [dbo].[boy]
+    wfashion: 2 -> 2 rows (baseline chk: 101272480, current: 0)
+    flask: 2 -> 2 rows (baseline chk: 101272480, current: 0)
+
+  [dbo].[bundle_tkt]
+    wfashion: 56 -> 56 rows (baseline chk: 1516524081, current: 0)
+    flask: 56 -> 56 rows (baseline chk: 1516524081, current: 0)
+
+  [dbo].[cancel_reason]
+    wfashion: 3 -> 3 rows (baseline chk: 201815455, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 201815455, current: 0)
+
+  [dbo].[care_list]
+    wfashion: 93 -> 93 rows (baseline chk: 894987871, current: 0)
+    flask: 93 -> 93 rows (baseline chk: 894987871, current: 0)
+
+  [dbo].[carelabel]
+    wfashion: 1 -> 1 rows (baseline chk: -1580411190, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1580411190, current: 0)
+
+  [dbo].[carton_label]
+    wfashion: 7742 -> 7742 rows (baseline chk: -1578982667, current: 0)
+    flask: 7742 -> 7742 rows (baseline chk: -1578982667, current: 0)
+
+  [dbo].[carton_split]
+    wfashion: 180 -> 180 rows (baseline chk: -1669216349, current: 0)
+    flask: 180 -> 180 rows (baseline chk: -1669216349, current: 0)
+
+  [dbo].[category]
+    wfashion: 18 -> 18 rows (baseline chk: 1866181607, current: 0)
+    flask: 18 -> 18 rows (baseline chk: 1866181607, current: 0)
+
+  [dbo].[charge_code]
+    wfashion: 32 -> 32 rows (baseline chk: -1706786488, current: 0)
+    flask: 32 -> 32 rows (baseline chk: -1706786488, current: 0)
+
+  [dbo].[chargedetail]
+    wfashion: 26 -> 26 rows (baseline chk: -36098424, current: 0)
+    flask: 26 -> 26 rows (baseline chk: -36098424, current: 0)
+
+  [dbo].[chargeheader]
+    wfashion: 7 -> 7 rows (baseline chk: -1906095315, current: 0)
+    flask: 7 -> 7 rows (baseline chk: -1906095315, current: 0)
+
+  [dbo].[Code_AddrState]
+    wfashion: 1 -> 1 rows (baseline chk: 5623408, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 5623408, current: 0)
+
+  [dbo].[code_band]
+    wfashion: 3 -> 3 rows (baseline chk: -1256411110, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -1256411110, current: 0)
+
+  [dbo].[code_box]
+    wfashion: 5 -> 5 rows (baseline chk: 570580465, current: 0)
+    flask: 5 -> 5 rows (baseline chk: 570580465, current: 0)
+
+  [dbo].[code_button]
+    wfashion: 3 -> 3 rows (baseline chk: 1418160381, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 1418160381, current: 0)
+
+  [dbo].[code_closure]
+    wfashion: 3 -> 3 rows (baseline chk: 27005097, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 27005097, current: 0)
+
+  [dbo].[code_country]
+    wfashion: 5 -> 5 rows (baseline chk: 147042430, current: 0)
+    flask: 5 -> 5 rows (baseline chk: 147042430, current: 0)
+
+  [dbo].[code_crown]
+    wfashion: 3 -> 3 rows (baseline chk: -1051642155, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -1051642155, current: 0)
+
+  [dbo].[code_currency]
+    wfashion: 1 -> 1 rows (baseline chk: 730424906, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 730424906, current: 0)
+
+  [dbo].[code_department]
+    wfashion: 6 -> 6 rows (baseline chk: -799199892, current: 0)
+    flask: 6 -> 6 rows (baseline chk: -799199892, current: 0)
+
+  [dbo].[code_doctype]
+    wfashion: 3 -> 3 rows (baseline chk: -520139941, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -520139941, current: 0)
+
+  [dbo].[code_dropship_packing_slip]
+    wfashion: 10 -> 10 rows (baseline chk: -390416318, current: 0)
+    flask: 10 -> 10 rows (baseline chk: -390416318, current: 0)
+
+  [dbo].[code_emb_loc]
+    wfashion: 5 -> 5 rows (baseline chk: 157037851, current: 0)
+    flask: 5 -> 5 rows (baseline chk: 157037851, current: 0)
+
+  [dbo].[code_importcat]
+    wfashion: 32 -> 32 rows (baseline chk: -114921967, current: 0)
+    flask: 32 -> 32 rows (baseline chk: -114921967, current: 0)
+
+  [dbo].[code_importcost]
+    wfashion: 4 -> 4 rows (baseline chk: -1706917695, current: 0)
+    flask: 4 -> 4 rows (baseline chk: -1706917695, current: 0)
+
+  [dbo].[code_language]
+    wfashion: 67 -> 67 rows (baseline chk: -1925433512, current: 0)
+    flask: 67 -> 67 rows (baseline chk: -1925433512, current: 0)
+
+  [dbo].[code_memo]
+    wfashion: 12 -> 12 rows (baseline chk: -486821698, current: 0)
+    flask: 12 -> 12 rows (baseline chk: -486821698, current: 0)
+
+  [dbo].[code_PDMTasks]
+    wfashion: 9 -> 9 rows (baseline chk: 1703731747, current: 0)
+    flask: 9 -> 9 rows (baseline chk: 1703731747, current: 0)
+
+  [dbo].[code_pmt]
+    wfashion: 4 -> 4 rows (baseline chk: -923738378, current: 0)
+    flask: 4 -> 4 rows (baseline chk: -923738378, current: 0)
+
+  [dbo].[code_prepack]
+    wfashion: 27 -> 27 rows (baseline chk: 2147482828, current: 0)
+    flask: 27 -> 27 rows (baseline chk: 2147482828, current: 0)
+
+  [dbo].[code_sampletype]
+    wfashion: 7 -> 7 rows (baseline chk: -1456525338, current: 0)
+    flask: 7 -> 7 rows (baseline chk: -1456525338, current: 0)
+
+  [dbo].[code_shipping_label]
+    wfashion: 2 -> 2 rows (baseline chk: -222294053, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -222294053, current: 0)
+
+  [dbo].[code_sku]
+    wfashion: 104197 -> 104197 rows (baseline chk: -763379401, current: 0)
+    flask: 104197 -> 104197 rows (baseline chk: -763379401, current: 0)
+
+  [dbo].[code_sku_alx]
+    wfashion: 3 -> 3 rows (baseline chk: 1143400952, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 1143400952, current: 0)
+
+  [dbo].[code_sku_inactive]
+    wfashion: 3 -> 3 rows (baseline chk: 1503476459, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 1503476459, current: 0)
+
+  [dbo].[code_sms]
+    wfashion: 25 -> 25 rows (baseline chk: 469294958, current: 0)
+    flask: 25 -> 25 rows (baseline chk: 469294958, current: 0)
+
+  [dbo].[code_spec]
+    wfashion: 68 -> 68 rows (baseline chk: -412601131, current: 0)
+    flask: 68 -> 68 rows (baseline chk: -412601131, current: 0)
+
+  [dbo].[code_tape]
+    wfashion: 2 -> 2 rows (baseline chk: -1592687128, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -1592687128, current: 0)
+
+  [dbo].[code_type]
+    wfashion: 8 -> 8 rows (baseline chk: -1537668983, current: 0)
+    flask: 8 -> 8 rows (baseline chk: -1537668983, current: 0)
+
+  [dbo].[code_user5]
+    wfashion: 5 -> 5 rows (baseline chk: -774496277, current: 0)
+    flask: 5 -> 5 rows (baseline chk: -774496277, current: 0)
+
+  [dbo].[color]
+    wfashion: 3426 -> 3426 rows (baseline chk: -143270020, current: 0)
+    flask: 3426 -> 3426 rows (baseline chk: -143270020, current: 0)
+
+  [dbo].[color_nrf]
+    wfashion: 1000 -> 1000 rows (baseline chk: 1305600716, current: 0)
+    flask: 1000 -> 1000 rows (baseline chk: 1305600716, current: 0)
+
+  [dbo].[color_palette]
+    wfashion: 2836 -> 2836 rows (baseline chk: -46428368, current: 0)
+    flask: 2836 -> 2836 rows (baseline chk: -46428368, current: 0)
+
+  [dbo].[color_size_nrf]
+    wfashion: 30 -> 30 rows (baseline chk: -1605755710, current: 0)
+    flask: 30 -> 30 rows (baseline chk: -1605755710, current: 0)
+
+  [dbo].[comdetail]
+    wfashion: 37 -> 37 rows (baseline chk: -1378334819, current: 0)
+    flask: 37 -> 37 rows (baseline chk: -1378334819, current: 0)
+
+  [dbo].[comheader]
+    wfashion: 17 -> 17 rows (baseline chk: -1304128668, current: 0)
+    flask: 17 -> 17 rows (baseline chk: -1304128668, current: 0)
+
+  [dbo].[company_directory]
+    wfashion: 15 -> 15 rows (baseline chk: -1416081644, current: 0)
+    flask: 15 -> 15 rows (baseline chk: -1416081644, current: 0)
+
+  [dbo].[consolidated_docs]
+    wfashion: 4 -> 4 rows (baseline chk: 11325758, current: 0)
+    flask: 4 -> 4 rows (baseline chk: 11325758, current: 0)
+
+  [dbo].[contacts]
+    wfashion: 34 -> 34 rows (baseline chk: 1820352200, current: 0)
+    flask: 34 -> 34 rows (baseline chk: 1820352200, current: 0)
+
+  [dbo].[container]
+    wfashion: 15 -> 15 rows (baseline chk: -300003566, current: 0)
+    flask: 15 -> 15 rows (baseline chk: -300003566, current: 0)
+
+  [dbo].[Container_cut]
+    wfashion: 26 -> 26 rows (baseline chk: 433882888, current: 0)
+    flask: 26 -> 26 rows (baseline chk: 433882888, current: 0)
+
+  [dbo].[Container_detail]
+    wfashion: 51 -> 51 rows (baseline chk: -138061457, current: 0)
+    flask: 51 -> 51 rows (baseline chk: -138061457, current: 0)
+
+  [dbo].[currency]
+    wfashion: 112 -> 112 rows (baseline chk: -627506324, current: 0)
+    flask: 112 -> 112 rows (baseline chk: -627506324, current: 0)
+
+  [dbo].[customer]
+    wfashion: 4937 -> 4937 rows (baseline chk: -1124438570, current: 0)
+    flask: 4937 -> 4937 rows (baseline chk: -1124438570, current: 0)
+
+  [dbo].[customer_edi]
+    wfashion: 206 -> 206 rows (baseline chk: -155622810, current: 0)
+    flask: 206 -> 206 rows (baseline chk: -155622810, current: 0)
+
+  [dbo].[customer_edi_log]
+    wfashion: 2072 -> 2072 rows (baseline chk: 2078544462, current: 0)
+    flask: 2072 -> 2072 rows (baseline chk: 2078544462, current: 0)
+
+  [dbo].[customer_log]
+    wfashion: 360 -> 360 rows (baseline chk: 2007455267, current: 0)
+    flask: 360 -> 360 rows (baseline chk: 2007455267, current: 0)
+
+  [dbo].[customer_shipping_label]
+    wfashion: 2 -> 2 rows (baseline chk: -318561118, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -318561118, current: 0)
+
+  [dbo].[customer_status]
+    wfashion: 4939 -> 4939 rows (baseline chk: -874296700, current: 0)
+    flask: 4939 -> 4939 rows (baseline chk: -874296700, current: 0)
+
+  [dbo].[cutdetail]
+    wfashion: 1905 -> 1905 rows (baseline chk: 2078234915, current: 0)
+    flask: 1905 -> 1905 rows (baseline chk: 2078234915, current: 0)
+
+  [dbo].[cutdetail_log]
+    wfashion: 6342 -> 6342 rows (baseline chk: -695937441, current: 0)
+    flask: 6342 -> 6342 rows (baseline chk: -695937441, current: 0)
+
+  [dbo].[cutheader]
+    wfashion: 561 -> 561 rows (baseline chk: 1729611664, current: 0)
+    flask: 561 -> 561 rows (baseline chk: 1729611664, current: 0)
+
+  [dbo].[cutheader_log]
+    wfashion: 3551 -> 3551 rows (baseline chk: 159603735, current: 0)
+    flask: 3551 -> 3551 rows (baseline chk: 159603735, current: 0)
+
+  [dbo].[dept]
+    wfashion: 12 -> 12 rows (baseline chk: -1367925941, current: 0)
+    flask: 12 -> 12 rows (baseline chk: -1367925941, current: 0)
+
+  [dbo].[design]
+    wfashion: 1 -> 1 rows (baseline chk: -1392771224, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1392771224, current: 0)
+
+  [dbo].[distri]
+    wfashion: 4933 -> 4933 rows (baseline chk: 1071208458, current: 0)
+    flask: 4933 -> 4933 rows (baseline chk: 1071208458, current: 0)
+
+  [dbo].[div]
+    wfashion: 24 -> 24 rows (baseline chk: -391746670, current: 0)
+    flask: 24 -> 24 rows (baseline chk: -391746670, current: 0)
+
+  [dbo].[division]
+    wfashion: 133 -> 133 rows (baseline chk: -362846492, current: 0)
+    flask: 133 -> 133 rows (baseline chk: -362846492, current: 0)
+
+  [dbo].[ecomm_inventory_update_temp]
+    wfashion: 17812 -> 17812 rows (baseline chk: 17812, current: 0)
+    flask: 17812 -> 17812 rows (baseline chk: 17812, current: 0)
+
+  [dbo].[eCommConfig]
+    wfashion: 3 -> 3 rows (baseline chk: 447805197, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 447805197, current: 0)
+
+  [dbo].[ecommerce_shipvia]
+    wfashion: 1 -> 1 rows (baseline chk: -51849317, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -51849317, current: 0)
+
+  [dbo].[edi_754]
+    wfashion: 26918 -> 26918 rows (baseline chk: 712848712, current: 0)
+    flask: 26918 -> 26918 rows (baseline chk: 712848712, current: 0)
+
+  [dbo].[edi_997]
+    wfashion: 251078 -> 251078 rows (baseline chk: 65933692, current: 0)
+    flask: 251078 -> 251078 rows (baseline chk: 65933692, current: 0)
+
+  [dbo].[edi_batch]
+    wfashion: 66 -> 66 rows (baseline chk: 2076875, current: 0)
+    flask: 66 -> 66 rows (baseline chk: 2076875, current: 0)
+
+  [dbo].[edi_category]
+    wfashion: 3 -> 3 rows (baseline chk: -548454638, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -548454638, current: 0)
+
+  [dbo].[edi_invoice]
+    wfashion: 2129497 -> 2129497 rows (baseline chk: 122688173, current: 0)
+    flask: 2129497 -> 2129497 rows (baseline chk: 122688173, current: 0)
+
+  [dbo].[edi_out]
+    wfashion: 15298 -> 15298 rows (baseline chk: 152344348, current: 0)
+    flask: 15298 -> 15298 rows (baseline chk: 152344348, current: 0)
+
+  [dbo].[edi_po]
+    wfashion: 315884 -> 315884 rows (baseline chk: -1093541640, current: 0)
+    flask: 315884 -> 315884 rows (baseline chk: -1093541640, current: 0)
+
+  [dbo].[edi_po_sku_qty]
+    wfashion: 3239685 -> 3239685 rows (baseline chk: -1081789360, current: 0)
+    flask: 3239685 -> 3239685 rows (baseline chk: -1081789360, current: 0)
+
+  [dbo].[edi_service_level]
+    wfashion: 4 -> 4 rows (baseline chk: -1286832666, current: 0)
+    flask: 4 -> 4 rows (baseline chk: -1286832666, current: 0)
+
+  [dbo].[edi_terms]
+    wfashion: 14 -> 14 rows (baseline chk: 1919787128, current: 0)
+    flask: 14 -> 14 rows (baseline chk: 1919787128, current: 0)
+
+  [dbo].[edilog]
+    wfashion: 58489 -> 58489 rows (baseline chk: 123006047, current: 0)
+    flask: 58489 -> 58489 rows (baseline chk: 123006047, current: 0)
+
+  [dbo].[email_queue]
+    wfashion: 12 -> 12 rows (baseline chk: 86446194, current: 0)
+    flask: 12 -> 12 rows (baseline chk: 86446194, current: 0)
+
+  [dbo].[error_mail]
+    wfashion: 1508 -> 1508 rows (baseline chk: 558081968, current: 0)
+    flask: 1508 -> 1508 rows (baseline chk: 558081968, current: 0)
+
+  [dbo].[factor]
+    wfashion: 2 -> 2 rows (baseline chk: -538238996, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -538238996, current: 0)
+
+  [dbo].[Factor_Assignment]
+    wfashion: 643 -> 643 rows (baseline chk: -2009154408, current: 0)
+    flask: 643 -> 643 rows (baseline chk: -2009154408, current: 0)
+
+  [dbo].[factor_customer]
+    wfashion: 281 -> 281 rows (baseline chk: 575434010, current: 0)
+    flask: 281 -> 281 rows (baseline chk: 575434010, current: 0)
+
+  [dbo].[factor_edi]
+    wfashion: 2 -> 2 rows (baseline chk: 1229893271, current: 0)
+    flask: 2 -> 2 rows (baseline chk: 1229893271, current: 0)
+
+  [dbo].[factor_terms]
+    wfashion: 52 -> 52 rows (baseline chk: 1537726704, current: 0)
+    flask: 52 -> 52 rows (baseline chk: 1537726704, current: 0)
+
+  [dbo].[glchart]
+    wfashion: 78 -> 78 rows (baseline chk: -1036113326, current: 0)
+    flask: 78 -> 78 rows (baseline chk: -1036113326, current: 0)
+
+  [dbo].[glcheck]
+    wfashion: 3 -> 3 rows (baseline chk: -1909219203, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -1909219203, current: 0)
+
+  [dbo].[glchkmaster]
+    wfashion: 2 -> 2 rows (baseline chk: -1631286611, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -1631286611, current: 0)
+
+  [dbo].[grp]
+    wfashion: 19 -> 19 rows (baseline chk: 1378710212, current: 0)
+    flask: 19 -> 19 rows (baseline chk: 1378710212, current: 0)
+
+  [dbo].[help]
+    wfashion: 695 -> 695 rows (baseline chk: -1622903160, current: 0)
+    flask: 695 -> 695 rows (baseline chk: -1622903160, current: 0)
+
+  [dbo].[import]
+    wfashion: 183 -> 183 rows (baseline chk: -77659459, current: 0)
+    flask: 183 -> 183 rows (baseline chk: -77659459, current: 0)
+
+  [dbo].[import_log]
+    wfashion: 1815 -> 1815 rows (baseline chk: 1328839826, current: 0)
+    flask: 1815 -> 1815 rows (baseline chk: 1328839826, current: 0)
+
+  [dbo].[import_logfdetail]
+    wfashion: 157191 -> 157191 rows (baseline chk: -430363112, current: 0)
+    flask: 157191 -> 157191 rows (baseline chk: -430363112, current: 0)
+
+  [dbo].[invdetail]
+    wfashion: 581987 -> 581987 rows (baseline chk: -74162248, current: 0)
+    flask: 581987 -> 581987 rows (baseline chk: -74162248, current: 0)
+
+  [dbo].[invdetail_log]
+    wfashion: 2442726 -> 2442726 rows (baseline chk: -8577894, current: 0)
+    flask: 2442726 -> 2442726 rows (baseline chk: -8577894, current: 0)
+
+  [dbo].[invhead_box]
+    wfashion: 311754 -> 311754 rows (baseline chk: 438480533, current: 0)
+    flask: 311754 -> 311754 rows (baseline chk: 438480533, current: 0)
+
+  [dbo].[invhead_box_log]
+    wfashion: 44612 -> 44612 rows (baseline chk: -1141854011, current: 0)
+    flask: 44612 -> 44612 rows (baseline chk: -1141854011, current: 0)
+
+  [dbo].[invhead_box_pallet]
+    wfashion: 6922 -> 6922 rows (baseline chk: -843018894, current: 0)
+    flask: 6922 -> 6922 rows (baseline chk: -843018894, current: 0)
+
+  [dbo].[invhead_box_seq]
+    wfashion: 7451368 -> 7451368 rows (baseline chk: 25590587, current: 0)
+    flask: 7451368 -> 7451368 rows (baseline chk: 25590587, current: 0)
+
+  [dbo].[invheader]
+    wfashion: 214047 -> 214047 rows (baseline chk: -1826292023, current: 0)
+    flask: 214047 -> 214047 rows (baseline chk: -1826292023, current: 0)
+
+  [dbo].[invheader_log]
+    wfashion: 997063 -> 997063 rows (baseline chk: -1194972036, current: 0)
+    flask: 997063 -> 997063 rows (baseline chk: -1194972036, current: 0)
+
+  [dbo].[iOSconfig]
+    wfashion: 1 -> 1 rows (baseline chk: -81747789, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -81747789, current: 0)
+
+  [dbo].[ivtf]
+    wfashion: 20826 -> 20826 rows (baseline chk: 436620631, current: 0)
+    flask: 20826 -> 20826 rows (baseline chk: 436620631, current: 0)
+
+  [dbo].[ivtf_delete_log]
+    wfashion: 100 -> 100 rows (baseline chk: 1046161107, current: 0)
+    flask: 100 -> 100 rows (baseline chk: 1046161107, current: 0)
+
+  [dbo].[ivtf_image]
+    wfashion: 30 -> 30 rows (baseline chk: 191151270, current: 0)
+    flask: 30 -> 30 rows (baseline chk: 191151270, current: 0)
+
+  [dbo].[ivtf_log]
+    wfashion: 793647 -> 793647 rows (baseline chk: -60092623, current: 0)
+    flask: 793647 -> 793647 rows (baseline chk: -60092623, current: 0)
+
+  [dbo].[ivtf_lot]
+    wfashion: 38202 -> 38202 rows (baseline chk: -1766551056, current: 0)
+    flask: 38202 -> 38202 rows (baseline chk: -1766551056, current: 0)
+
+  [dbo].[ivtf_lot_bartender]
+    wfashion: 301 -> 301 rows (baseline chk: -1563091072, current: 0)
+    flask: 301 -> 301 rows (baseline chk: -1563091072, current: 0)
+
+  [dbo].[ivtf_prepack]
+    wfashion: 4878 -> 4878 rows (baseline chk: 397213646, current: 0)
+    flask: 4878 -> 4878 rows (baseline chk: 397213646, current: 0)
+
+  [dbo].[ivtf_sample]
+    wfashion: 1 -> 1 rows (baseline chk: 294861349, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 294861349, current: 0)
+
+  [dbo].[ivtf_sample_spec_image_log]
+    wfashion: 3 -> 3 rows (baseline chk: 870846762, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 870846762, current: 0)
+
+  [dbo].[ivtf_user_selection]
+    wfashion: 1327 -> 1327 rows (baseline chk: 103089838, current: 0)
+    flask: 1327 -> 1327 rows (baseline chk: 103089838, current: 0)
+
+  [dbo].[ivtf_vendor]
+    wfashion: 169 -> 169 rows (baseline chk: -1605251701, current: 0)
+    flask: 169 -> 169 rows (baseline chk: -1605251701, current: 0)
+
+  [dbo].[ivtf_vendor_cost]
+    wfashion: 29 -> 29 rows (baseline chk: -1294710363, current: 0)
+    flask: 29 -> 29 rows (baseline chk: -1294710363, current: 0)
+
+  [dbo].[ivtf_wh]
+    wfashion: 229087 -> 229087 rows (baseline chk: 1207408811, current: 0)
+    flask: 229087 -> 229087 rows (baseline chk: 1207408811, current: 0)
+
+  [dbo].[ivtf_wh_prepack]
+    wfashion: 39977 -> 39977 rows (baseline chk: 840274748, current: 0)
+    flask: 39977 -> 39977 rows (baseline chk: 840274748, current: 0)
+
+  [dbo].[ivtr]
+    wfashion: 3 -> 3 rows (baseline chk: -159335798, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -159335798, current: 0)
+
+  [dbo].[ivtr_image]
+    wfashion: 1 -> 1 rows (baseline chk: -320770276, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -320770276, current: 0)
+
+  [dbo].[ivtr_lot]
+    wfashion: 4 -> 4 rows (baseline chk: 1624893199, current: 0)
+    flask: 4 -> 4 rows (baseline chk: 1624893199, current: 0)
+
+  [dbo].[iWMS_Boxing]
+    wfashion: 14297497 -> 14297497 rows (baseline chk: 1065599406, current: 0)
+    flask: 14297497 -> 14297497 rows (baseline chk: 1065599406, current: 0)
+
+  [dbo].[job_queue]
+    wfashion: 546523 -> 546523 rows (baseline chk: 491247572, current: 0)
+    flask: 546523 -> 546523 rows (baseline chk: 491247572, current: 0)
+
+  [dbo].[location]
+    wfashion: 5 -> 5 rows (baseline chk: 1155664871, current: 0)
+    flask: 5 -> 5 rows (baseline chk: 1155664871, current: 0)
+
+  [dbo].[logfdetail]
+    wfashion: 431346 -> 431346 rows (baseline chk: -781715092, current: 0)
+    flask: 431346 -> 431346 rows (baseline chk: -781715092, current: 0)
+
+  [dbo].[logfheader]
+    wfashion: 17347 -> 17347 rows (baseline chk: -1642476438, current: 0)
+    flask: 17347 -> 17347 rows (baseline chk: -1642476438, current: 0)
+
+  [dbo].[lookup]
+    wfashion: 5 -> 5 rows (baseline chk: 1128729615, current: 0)
+    flask: 5 -> 5 rows (baseline chk: 1128729615, current: 0)
+
+  [dbo].[manufacturer]
+    wfashion: 207 -> 207 rows (baseline chk: -836089749, current: 0)
+    flask: 207 -> 207 rows (baseline chk: -836089749, current: 0)
+
+  [dbo].[misc]
+    wfashion: 1 -> 1 rows (baseline chk: -1192935567, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1192935567, current: 0)
+
+  [dbo].[Order_spec]
+    wfashion: 301 -> 301 rows (baseline chk: -1812675113, current: 0)
+    flask: 301 -> 301 rows (baseline chk: -1812675113, current: 0)
+
+  [dbo].[packlist]
+    wfashion: 672116 -> 672116 rows (baseline chk: -2012832950, current: 0)
+    flask: 672116 -> 672116 rows (baseline chk: -2012832950, current: 0)
+
+  [dbo].[packlist_LOG]
+    wfashion: 8193892 -> 8193892 rows (baseline chk: 642351354, current: 0)
+    flask: 8193892 -> 8193892 rows (baseline chk: 642351354, current: 0)
+
+  [dbo].[PDMTask_notifications]
+    wfashion: 2 -> 2 rows (baseline chk: -916990998, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -916990998, current: 0)
+
+  [dbo].[pickdetail]
+    wfashion: 589732 -> 589732 rows (baseline chk: 362662068, current: 0)
+    flask: 589732 -> 589732 rows (baseline chk: 362662068, current: 0)
+
+  [dbo].[pickdetail_log]
+    wfashion: 1813816 -> 1813816 rows (baseline chk: 1643998217, current: 0)
+    flask: 1813816 -> 1813816 rows (baseline chk: 1643998217, current: 0)
+
+  [dbo].[pickheader]
+    wfashion: 214629 -> 214629 rows (baseline chk: -58144917, current: 0)
+    flask: 214629 -> 214629 rows (baseline chk: -58144917, current: 0)
+
+  [dbo].[pickheader_log]
+    wfashion: 1075878 -> 1075878 rows (baseline chk: -1404894302, current: 0)
+    flask: 1075878 -> 1075878 rows (baseline chk: -1404894302, current: 0)
+
+  [dbo].[podetail]
+    wfashion: 7 -> 7 rows (baseline chk: 1154868092, current: 0)
+    flask: 7 -> 7 rows (baseline chk: 1154868092, current: 0)
+
+  [dbo].[poheader]
+    wfashion: 3 -> 3 rows (baseline chk: 396180624, current: 0)
+    flask: 3 -> 3 rows (baseline chk: 396180624, current: 0)
+
+  [dbo].[prepdatac]
+    wfashion: 6476 -> 6476 rows (baseline chk: 1015771545, current: 0)
+    flask: 6476 -> 6476 rows (baseline chk: 1015771545, current: 0)
+
+  [dbo].[process_audit_log]
+    wfashion: 169 -> 169 rows (baseline chk: 586191431, current: 0)
+    flask: 169 -> 169 rows (baseline chk: 586191431, current: 0)
+
+  [dbo].[QCTemplate]
+    wfashion: 2 -> 2 rows (baseline chk: 1775889442, current: 0)
+    flask: 2 -> 2 rows (baseline chk: 1775889442, current: 0)
+
+  [dbo].[rmadetail]
+    wfashion: 6189 -> 6189 rows (baseline chk: -556476604, current: 0)
+    flask: 6189 -> 6189 rows (baseline chk: -556476604, current: 0)
+
+  [dbo].[rmaheader]
+    wfashion: 4054 -> 4054 rows (baseline chk: -157133535, current: 0)
+    flask: 4054 -> 4054 rows (baseline chk: -157133535, current: 0)
+
+  [dbo].[salesrep]
+    wfashion: 9 -> 9 rows (baseline chk: 908529922, current: 0)
+    flask: 9 -> 9 rows (baseline chk: 908529922, current: 0)
+
+  [dbo].[scan_generic]
+    wfashion: 732 -> 732 rows (baseline chk: -1393786109, current: 0)
+    flask: 732 -> 732 rows (baseline chk: -1393786109, current: 0)
+
+  [dbo].[SCANPACK]
+    wfashion: 78827 -> 78827 rows (baseline chk: -1947273934, current: 0)
+    flask: 78827 -> 78827 rows (baseline chk: -1947273934, current: 0)
+
+  [dbo].[SCANRECEIVE]
+    wfashion: 122 -> 122 rows (baseline chk: 620464, current: 0)
+    flask: 122 -> 122 rows (baseline chk: 620464, current: 0)
+
+  [dbo].[season]
+    wfashion: 73 -> 73 rows (baseline chk: 405510066, current: 0)
+    flask: 73 -> 73 rows (baseline chk: 405510066, current: 0)
+
+  [dbo].[Sheet1$]
+    wfashion: 453 -> 453 rows (baseline chk: -883251241, current: 0)
+    flask: 453 -> 453 rows (baseline chk: -883251241, current: 0)
+
+  [dbo].[Sheet2$]
+    wfashion: 453 -> 453 rows (baseline chk: -1758169202, current: 0)
+    flask: 453 -> 453 rows (baseline chk: -1758169202, current: 0)
+
+  [dbo].[shipvia]
+    wfashion: 841 -> 841 rows (baseline chk: -1211245584, current: 0)
+    flask: 841 -> 841 rows (baseline chk: -1211245584, current: 0)
+
+  [dbo].[so_image]
+    wfashion: 6 -> 6 rows (baseline chk: 246770623, current: 0)
+    flask: 6 -> 6 rows (baseline chk: 246770623, current: 0)
+
+  [dbo].[so_manual_alloc]
+    wfashion: 449497 -> 449497 rows (baseline chk: -42246669, current: 0)
+    flask: 449497 -> 449497 rows (baseline chk: -42246669, current: 0)
+
+  [dbo].[sodetail]
+    wfashion: 617714 -> 617714 rows (baseline chk: -1418352888, current: 0)
+    flask: 617714 -> 617714 rows (baseline chk: -1418352888, current: 0)
+
+  [dbo].[sodetail_850]
+    wfashion: 877 -> 877 rows (baseline chk: -1599527482, current: 0)
+    flask: 877 -> 877 rows (baseline chk: -1599527482, current: 0)
+
+  [dbo].[sodetail_log]
+    wfashion: 626147 -> 626147 rows (baseline chk: -1023173382, current: 0)
+    flask: 626147 -> 626147 rows (baseline chk: -1023173382, current: 0)
+
+  [dbo].[soheader]
+    wfashion: 220587 -> 220587 rows (baseline chk: -1694658653, current: 0)
+    flask: 220587 -> 220587 rows (baseline chk: -1694658653, current: 0)
+
+  [dbo].[soheader_850]
+    wfashion: 327 -> 327 rows (baseline chk: 586649822, current: 0)
+    flask: 327 -> 327 rows (baseline chk: 586649822, current: 0)
+
+  [dbo].[soheader_cutdefault]
+    wfashion: 7910 -> 7910 rows (baseline chk: 201562, current: 0)
+    flask: 7910 -> 7910 rows (baseline chk: 201562, current: 0)
+
+  [dbo].[soheader_log]
+    wfashion: 803392 -> 803392 rows (baseline chk: -1054949838, current: 0)
+    flask: 803392 -> 803392 rows (baseline chk: -1054949838, current: 0)
+
+  [dbo].[spec_sheet]
+    wfashion: 2 -> 2 rows (baseline chk: -2054654706, current: 0)
+    flask: 2 -> 2 rows (baseline chk: -2054654706, current: 0)
+
+  [dbo].[spec_sheet_log]
+    wfashion: 8 -> 8 rows (baseline chk: 49200, current: 0)
+    flask: 8 -> 8 rows (baseline chk: 49200, current: 0)
+
+  [dbo].[states]
+    wfashion: 1 -> 1 rows (baseline chk: 2140856202, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 2140856202, current: 0)
+
+  [dbo].[store]
+    wfashion: 56048 -> 56048 rows (baseline chk: 1903394063, current: 0)
+    flask: 56048 -> 56048 rows (baseline chk: 1903394063, current: 0)
+
+  [dbo].[T1]
+    wfashion: 9857 -> 9857 rows (baseline chk: 104684218, current: 0)
+    flask: 9857 -> 9857 rows (baseline chk: 104684218, current: 0)
+
+  [dbo].[T3]
+    wfashion: 1 -> 1 rows (baseline chk: -1494662829, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1494662829, current: 0)
+
+  [dbo].[terms]
+    wfashion: 71 -> 71 rows (baseline chk: 675057679, current: 0)
+    flask: 71 -> 71 rows (baseline chk: 675057679, current: 0)
+
+  [dbo].[Translation]
+    wfashion: 15149 -> 15149 rows (baseline chk: -323158846, current: 0)
+    flask: 15149 -> 15149 rows (baseline chk: -323158846, current: 0)
+
+  [dbo].[uom]
+    wfashion: 6 -> 6 rows (baseline chk: 1268913446, current: 0)
+    flask: 6 -> 6 rows (baseline chk: 1268913446, current: 0)
+
+  [dbo].[ups_charge]
+    wfashion: 6150 -> 6150 rows (baseline chk: 60578304, current: 0)
+    flask: 6150 -> 6150 rows (baseline chk: 60578304, current: 0)
+
+  [dbo].[ups_charge_Hund]
+    wfashion: 105 -> 105 rows (baseline chk: 47152760, current: 0)
+    flask: 105 -> 105 rows (baseline chk: 47152760, current: 0)
+
+  [dbo].[ups_zone]
+    wfashion: 137 -> 137 rows (baseline chk: 683845311, current: 0)
+    flask: 137 -> 137 rows (baseline chk: 683845311, current: 0)
+
+  [dbo].[UserNotify]
+    wfashion: 29 -> 29 rows (baseline chk: 1099616198, current: 0)
+    flask: 29 -> 29 rows (baseline chk: 1099616198, current: 0)
+
+  [dbo].[WAREHOUSE]
+    wfashion: 11 -> 11 rows (baseline chk: 1858192371, current: 0)
+    flask: 11 -> 11 rows (baseline chk: 1858192371, current: 0)
+
+  [dbo].[webconfig]
+    wfashion: 1 -> 1 rows (baseline chk: -1279638887, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1279638887, current: 0)
+
+  [dbo].[Webcutheaderpdm]
+    wfashion: 1 -> 1 rows (baseline chk: 851941567, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 851941567, current: 0)
+
+  [dbo].[WebPdmHeads]
+    wfashion: 1 -> 1 rows (baseline chk: 1553057473, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 1553057473, current: 0)
+
+  [dbo].[webprodpattern_detail1]
+    wfashion: 1 -> 1 rows (baseline chk: -1702213989, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1702213989, current: 0)
+
+  [dbo].[wf_version]
+    wfashion: 223 -> 223 rows (baseline chk: 475178800, current: 0)
+    flask: 223 -> 223 rows (baseline chk: 475178800, current: 0)
+
+  [dbo].[wfprofiles]
+    wfashion: 78 -> 78 rows (baseline chk: 374837296, current: 0)
+    flask: 78 -> 78 rows (baseline chk: 374837296, current: 0)
+
+  [dbo].[WFSearch]
+    wfashion: 144 -> 144 rows (baseline chk: -693230234, current: 0)
+    flask: 144 -> 144 rows (baseline chk: -693230234, current: 0)
+
+  [dbo].[WFSearch_history]
+    wfashion: 8 -> 8 rows (baseline chk: 1609234767, current: 0)
+    flask: 8 -> 8 rows (baseline chk: 1609234767, current: 0)
+
+  [dbo].[wfsystem]
+    wfashion: 1 -> 1 rows (baseline chk: 83612088, current: 0)
+    flask: 1 -> 1 rows (baseline chk: 83612088, current: 0)
+
+  [dbo].[wfsystem2]
+    wfashion: 1 -> 1 rows (baseline chk: -1540777074, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1540777074, current: 0)
+
+  [dbo].[wfsystem3]
+    wfashion: 1 -> 1 rows (baseline chk: -1255478172, current: 0)
+    flask: 1 -> 1 rows (baseline chk: -1255478172, current: 0)
+
+  [dbo].[wfupdate]
+    wfashion: 74 -> 74 rows (baseline chk: 1527853405, current: 0)
+    flask: 74 -> 74 rows (baseline chk: 1527853405, current: 0)
+
+  [dbo].[wfuser]
+    wfashion: 32 -> 32 rows (baseline chk: 1916299571, current: 0)
+    flask: 32 -> 32 rows (baseline chk: 648300595, current: 0)
+
+  [dbo].[wfuser_log]
+    wfashion: 56840 -> 56840 rows (baseline chk: -87189071, current: 0)
+    flask: 56840 -> 56840 rows (baseline chk: -87189071, current: 0)
+
+  [dbo].[wfuser_settings]
+    wfashion: 32 -> 32 rows (baseline chk: -2147052426, current: 0)
+    flask: 32 -> 32 rows (baseline chk: -2147052426, current: 0)
+
+  [dbo].[wfuser_sort]
+    wfashion: 20 -> 20 rows (baseline chk: -533279525, current: 0)
+    flask: 20 -> 20 rows (baseline chk: -533279525, current: 0)
+
+  [dbo].[wh_batch]
+    wfashion: 20042 -> 20042 rows (baseline chk: -648644681, current: 0)
+    flask: 20042 -> 20042 rows (baseline chk: -648644681, current: 0)
+
+  [dbo].[wh_bin]
+    wfashion: 3 -> 3 rows (baseline chk: -212529081, current: 0)
+    flask: 3 -> 3 rows (baseline chk: -212529081, current: 0)
+
+  [dbo].[wh_pallet]
+    wfashion: 4 -> 4 rows (baseline chk: -1425244959, current: 0)
+    flask: 4 -> 4 rows (baseline chk: -1425244959, current: 0)
+
+  [dbo].[zipcode]
+    wfashion: 72907 -> 72907 rows (baseline chk: 2012845253, current: 0)
+    flask: 72907 -> 72907 rows (baseline chk: 2012845253, current: 0)
+
+  [dbo].[zz_code_sku_230105]
+    wfashion: 41493 -> 41493 rows (baseline chk: -1838377962, current: 0)
+    flask: 41493 -> 41493 rows (baseline chk: -1838377962, current: 0)
+
+  [dbo].[zz_edi_po_sku_qty]
+    wfashion: 156 -> 156 rows (baseline chk: -406162090, current: 0)
+    flask: 156 -> 156 rows (baseline chk: -406162090, current: 0)
+
+  [dbo].[zz_fedex_shipvia]
+    wfashion: 343 -> 343 rows (baseline chk: 799227543, current: 0)
+    flask: 343 -> 343 rows (baseline chk: 799227543, current: 0)
+
+  [dbo].[zz_invdetail_latest]
+    wfashion: 3531 -> 3531 rows (baseline chk: -1566282817, current: 0)
+    flask: 3531 -> 3531 rows (baseline chk: -1566282817, current: 0)
+
+  [dbo].[zz_ivtf_Ecomm_edi]
+    wfashion: 4 -> 4 rows (baseline chk: -300307457, current: 0)
+    flask: 4 -> 4 rows (baseline chk: -300307457, current: 0)
+
+  [dbo].[zz_ivtf_qty]
+    wfashion: 17946 -> 17946 rows (baseline chk: -1518321033, current: 0)
+    flask: 17946 -> 17946 rows (baseline chk: -1518321033, current: 0)
+
+  [dbo].[zz_ivtf_wh_250714]
+    wfashion: 183308 -> 183308 rows (baseline chk: 664198197, current: 0)
+    flask: 183308 -> 183308 rows (baseline chk: 664198197, current: 0)
+
+  [dbo].[zz_po]
+    wfashion: 138 -> 138 rows (baseline chk: 499, current: 0)
+    flask: 138 -> 138 rows (baseline chk: 499, current: 0)
+
+================================================================
+ROW-LEVEL CHANGES (up to 100 per table - full diff in CSV if truncated)
+================================================================
+CSV output dir: /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv
+
+  === [dbo].[aa_ups] ===
+
+  === [dbo].[aa_ups_in] ===
+
+  === [dbo].[aa_ups_pick] ===
+  (large table: 685943 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[aa_ups_pick] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_aa_ups_pick__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_aa_ups_pick__new_in_flask.csv
+
+  === [dbo].[acc_calendar] ===
+
+  === [dbo].[activity_log] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[Allocation_fields] ===
+
+  === [dbo].[Amazon_Product_Schema] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[aphead] ===
+
+  === [dbo].[arcash] ===
+
+  === [dbo].[archeck] ===
+
+  === [dbo].[AVSCODE] ===
+
+  === [dbo].[bartender] ===
+
+  === [dbo].[bartender_bysize] ===
+
+  === [dbo].[bartender_bysize48] ===
+  (large table: 773613 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[bartender_bysize48] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_bartender_bysize48__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_bartender_bysize48__new_in_flask.csv
+
+  === [dbo].[bartender_upc] ===
+
+  === [dbo].[bartender2] ===
+
+  === [dbo].[bartender3] ===
+
+  === [dbo].[bartender4] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[billto] ===
+
+  === [dbo].[body] ===
+
+  === [dbo].[bol] ===
+
+  === [dbo].[bol_carton] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[boxrule] ===
+
+  === [dbo].[boy] ===
+
+  === [dbo].[bundle_tkt] ===
+
+  === [dbo].[cancel_reason] ===
+
+  === [dbo].[care_list] ===
+
+  === [dbo].[carelabel] ===
+
+  === [dbo].[carton_label] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[carton_split] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[category] ===
+
+  === [dbo].[charge_code] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[chargedetail] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[chargeheader] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[Code_AddrState] ===
+
+  === [dbo].[code_band] ===
+
+  === [dbo].[code_box] ===
+
+  === [dbo].[code_button] ===
+
+  === [dbo].[code_closure] ===
+
+  === [dbo].[code_country] ===
+
+  === [dbo].[code_crown] ===
+
+  === [dbo].[code_currency] ===
+
+  === [dbo].[code_department] ===
+
+  === [dbo].[code_doctype] ===
+
+  === [dbo].[code_dropship_packing_slip] ===
+
+  === [dbo].[code_emb_loc] ===
+
+  === [dbo].[code_importcat] ===
+
+  === [dbo].[code_importcost] ===
+
+  === [dbo].[code_language] ===
+
+  === [dbo].[code_memo] ===
+
+  === [dbo].[code_PDMTasks] ===
+
+  === [dbo].[code_pmt] ===
+
+  === [dbo].[code_prepack] ===
+
+  === [dbo].[code_sampletype] ===
+
+  === [dbo].[code_shipping_label] ===
+
+  === [dbo].[code_sku] ===
+
+  === [dbo].[code_sku_alx] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[code_sku_inactive] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[code_sms] ===
+
+  === [dbo].[code_spec] ===
+
+  === [dbo].[code_tape] ===
+
+  === [dbo].[code_type] ===
+
+  === [dbo].[code_user5] ===
+
+  === [dbo].[color] ===
+
+  === [dbo].[color_nrf] ===
+
+  === [dbo].[color_palette] ===
+
+  === [dbo].[color_size_nrf] ===
+
+  === [dbo].[comdetail] ===
+
+  === [dbo].[comheader] ===
+
+  === [dbo].[company_directory] ===
+
+  === [dbo].[consolidated_docs] ===
+
+  === [dbo].[contacts] ===
+
+  === [dbo].[container] ===
+
+  === [dbo].[Container_cut] ===
+
+  === [dbo].[Container_detail] ===
+
+  === [dbo].[currency] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[customer] ===
+
+  === [dbo].[customer_edi] ===
+
+  === [dbo].[customer_edi_log] ===
+
+  === [dbo].[customer_log] ===
+
+  === [dbo].[customer_shipping_label] ===
+
+  === [dbo].[customer_status] ===
+
+  === [dbo].[cutdetail] ===
+
+  === [dbo].[cutdetail_log] ===
+
+  === [dbo].[cutheader] ===
+
+  === [dbo].[cutheader_log] ===
+
+  === [dbo].[dept] ===
+
+  === [dbo].[design] ===
+
+  === [dbo].[distri] ===
+
+  === [dbo].[div] ===
+
+  === [dbo].[division] ===
+
+  === [dbo].[ecomm_inventory_update_temp] ===
+
+  === [dbo].[eCommConfig] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[ecommerce_shipvia] ===
+
+  === [dbo].[edi_754] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[edi_997] ===
+
+  === [dbo].[edi_batch] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[edi_category] ===
+
+  === [dbo].[edi_invoice] ===
+  (large table: 2129497 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[edi_invoice] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_edi_invoice__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_edi_invoice__new_in_flask.csv
+
+  === [dbo].[edi_out] ===
+
+  === [dbo].[edi_po] ===
+
+  === [dbo].[edi_po_sku_qty] ===
+  (large table: 3239685 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[edi_po_sku_qty] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_edi_po_sku_qty__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_edi_po_sku_qty__new_in_flask.csv
+
+  === [dbo].[edi_service_level] ===
+
+  === [dbo].[edi_terms] ===
+
+  === [dbo].[edilog] ===
+
+  === [dbo].[email_queue] ===
+
+  === [dbo].[error_mail] ===
+
+  === [dbo].[factor] ===
+
+  === [dbo].[Factor_Assignment] ===
+
+  === [dbo].[factor_customer] ===
+
+  === [dbo].[factor_edi] ===
+
+  === [dbo].[factor_terms] ===
+
+  === [dbo].[glchart] ===
+
+  === [dbo].[glcheck] ===
+
+  === [dbo].[glchkmaster] ===
+
+  === [dbo].[grp] ===
+
+  === [dbo].[help] ===
+
+  === [dbo].[import] ===
+
+  === [dbo].[import_log] ===
+
+  === [dbo].[import_logfdetail] ===
+
+  === [dbo].[invdetail] ===
+  (large table: 581987 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[invdetail] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_invdetail__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_invdetail__new_in_flask.csv
+
+  === [dbo].[invdetail_log] ===
+  (large table: 2442726 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[invdetail_log] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_invdetail_log__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_invdetail_log__new_in_flask.csv
+     exporting modified (02740 rows) -> dbo_invdetail_log__modified.csv
+
+  === [dbo].[aa_ups] ===
+
+  === [dbo].[aa_ups_in] ===
+
+  === [dbo].[aa_ups_pick] ===
+  (large table: 685943 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[aa_ups_pick] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_aa_ups_pick__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_aa_ups_pick__new_in_flask.csv
+
+  === [dbo].[acc_calendar] ===
+
+  === [dbo].[activity_log] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[Allocation_fields] ===
+
+  === [dbo].[Amazon_Product_Schema] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[aphead] ===
+
+  === [dbo].[arcash] ===
+
+  === [dbo].[archeck] ===
+
+  === [dbo].[AVSCODE] ===
+
+  === [dbo].[bartender] ===
+
+  === [dbo].[bartender_bysize] ===
+
+  === [dbo].[bartender_bysize48] ===
+  (large table: 773613 rows - interactive diff limited to 100, full export to CSV)
+  (large table - interactive TOP 100 skipped, CSV will contain full diff)
+  >> CSV export for [dbo].[bartender_bysize48] -> /Users/tarun/workspace/personal/edi/temp/reports/20260916_105408/csv/
+     exporting new_in_wfashion (0 rows) -> dbo_bartender_bysize48__new_in_wfashion.csv
+     exporting new_in_flask (0 rows) -> dbo_bartender_bysize48__new_in_flask.csv
+
+  === [dbo].[bartender_upc] ===
+
+  === [dbo].[bartender2] ===
+
+  === [dbo].[bartender3] ===
+
+  === [dbo].[bartender4] ===
+  (no PK/UNIQUE constraint - row-level diff skipped, no CSV)
+
+  === [dbo].[billto] ===
+
+  === [dbo].[body] ===
+
+  === [dbo].[bol] ===
