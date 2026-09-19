@@ -27,6 +27,10 @@
     b. update SH -> SC
 15. Send out the Acknowledgement (the 997 file generated in step 6)
 
+## For rollout update sales order header div to
+1. Division needs to be updated to R
+## updating cutnumber is sales order detail
+
 ## Send the details to UNI.
 1. Go go sales order.
 2. pick one sales order.
