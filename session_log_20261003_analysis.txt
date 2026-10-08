@@ -1,0 +1,17 @@
+=== Session Log ===
+Date: Sat Oct 03 2026
+
+Issue investigated: compare_dbs.sh appears to loop/hang when exporting CSV for small diffs
+
+Analysis:
+1. The script's row-level processing loop is correctly structured (reads from CHANGED_TABLES_FILE with redirect). No stdin consumption bugs found.
+2. For edi_out (2 rows different in erp vs wfashion), NEED_CSV is set to true because R1_COUNT>0.
+3. In export_csv(), it tries bcp first (if available at /opt/homebrew/bin/bcp). bcp needs DYLD_LIBRARY_PATH for ODBC libs; without proper env it may behave differently.
+4. Network connectivity to 192.168.168.106:2436 timed out at time of testing (nc timed out, bcp also failed to connect with login timeout). SQL server appears unreachable from current environment.
+5. The 'looping' symptom observed by user is likely the script hanging on bcp export while trying to connect to an unreachable server.
+6. Script does set DYLD_LIBRARY_PATH at top - when running in same env it should be fine. But if DB is unreachable, both bcp and sqlcmd will hang/fail depending on timeouts.
+
+Recommendation: Fix export_csv to respect/connect with shorter timeouts or add detection when server unreachable. Also consider disabling bcp if connection is problematic, or set bcp's login timeout.
+
+Files examined: sql-monitoring/compare_dbs.sh (export_csv function lines ~108-148, row-level processing ~362-621)
+---

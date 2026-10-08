@@ -24,7 +24,7 @@
 - **Connectivity**: WORKING on port 2436
 - **Server**: SQL Server 2022 RTM-CU25, Windows Server 2022
 - **wf125sR_82026 NO LONGER EXISTS** — it was a dated restore copy; all monitoring deployed there on 2026-08-20 is GONE
-- **readwrite_user currently has access to**: wfashion, flask (others deny login: wf125sR, WF125sR_TEST, plugg_llc, BARTENDER)
+- **readwrite_user currently has access to**: wfashion, flask, **erp** (verified 2026-10-02; 588 tables, trigger set identical to wfashion). Others deny login: wf125sR, WF125sR_TEST, plugg_llc, BARTENDER
 - **w-fashion: FULLY MONITORED (deployed 2026-08-22)**:
   - `mon` schema with dml_audit / ddl_audit / rowcount_history tables
   - 587 DML audit triggers (every user table except legacy dbo.dtproperties)
@@ -47,6 +47,9 @@
 - sqlcmd metadata exports need `-y 0` (else 4000-char truncation) and cannot combine `-y` with `-W` or `-h`
 - STRING_AGG over column lists: CAST to NVARCHAR(MAX) or hits 8000-byte limit
 - Computed columns derived from LOB types break inserted/deleted references (Msg 311) → exclude ALL computed columns from trigger column lists (loss-free: derivable)
+- **sqlcmd/OpenSSL (macOS, 2026-10-02)**: ODBC Driver 17 dlopen()s libssl by soname, but neither sqlcmd nor libmsodbcsql.17.dylib has an LC_RPATH and /opt/homebrew/lib isn't on dyld's default path → "SSL Provider: OpenSSL library could not be loaded" and EVERY connection fails. Breaks silently after an `brew upgrade openssl@3` (hit on 3.6.5). Fix: `export DYLD_LIBRARY_PATH=/opt/homebrew/lib` — `compare_dbs.sh` now does this itself
+- Shell scripts using `set -euo pipefail`: any `grep` that legitimately finds nothing returns 1 and aborts the script mid-run, leaving empty output dirs and no report. Always append `|| true` to grep/comm pipelines used for optional data
+- Never trust `temp/snapshot_<db>.txt` unless it has parseable rows — a failed capture writes only the sqlcmd error text, and the tool will otherwise treat it as a valid baseline
 
 
 

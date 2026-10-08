@@ -9,6 +9,17 @@
 
 set -euo pipefail
 
+_brew_prefix="$(brew --prefix 2>/dev/null || true)"
+ODBC_LIBS=""
+for _d in "${_brew_prefix:-/nonexistent}/lib" "${_brew_prefix:-/nonexistent}/opt/openssl@3/lib" /opt/homebrew/lib /opt/homebrew/opt/openssl@3/lib /usr/local/lib /usr/local/opt/openssl@3/lib; do
+  if [ -d "$_d" ]; then
+    ODBC_LIBS="${ODBC_LIBS:+${ODBC_LIBS}:}$_d"
+  fi
+done
+if [ -n "$ODBC_LIBS" ]; then
+  export DYLD_LIBRARY_PATH="${ODBC_LIBS}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
+fi
+
 SERVER="192.168.168.106,2436"
 USER="readwrite_user"
 PASS='VeryStrongPassword123!'
@@ -40,6 +51,20 @@ done
 
 DB1="${DB1:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline] [--summary-only]}"
 DB2="${DB2:?Usage: $0 [--snapshot] <db1> <db2> [--no-baseline]}"
+
+preflight_db() {
+  local _db="$1" _err
+  if ! _err=$(sqlcmd -S "$SERVER" -d "$_db" -U "$USER" -P "$PASS" -C -l 15 -Q "SET NOCOUNT ON; SELECT 1" </dev/null 2>&1); then
+    echo "ERROR: cannot connect to database '$_db' on $SERVER as $USER" >&2
+    echo "$_err" | sed 's/^/  /' >&2
+    if echo "$_err" | grep -q "SSL Provider"; then
+      echo "  Hint: ODBC Driver 17 failed to load OpenSSL. Ensure DYLD_LIBRARY_PATH includes the Homebrew lib dir." >&2
+    fi
+    return 1
+  fi
+}
+preflight_db "$DB1" || exit 1
+preflight_db "$DB2" || exit 1
 
 REPORT_DIR="$REPO_ROOT/temp/reports/${TIMESTAMP}"
 mkdir -p "$REPORT_DIR"
@@ -106,11 +131,11 @@ export_csv() {
 }
 
 parse_counts() {
-  grep -E '^\[' | awk '{print $1, $2}'
+  grep -E '^\[' "$1" 2>/dev/null | awk '{print $1, $2}' || true
 }
 
 parse_snapshot() {
-  grep -E '^\[' | awk '{print $1, $2, $3}'
+  grep -E '^\[' 2>/dev/null | awk '{print $1, $2, $3}' || true
 }
 
 # Use 'dbo.' (unescaped dot matches any char, fine for this format)
@@ -159,11 +184,18 @@ done
 # --- Load baselines if available ---
 HAS_BASELINE=false
 if [ "$NO_BASELINE" = false ] && [ -f "$SNAP1" ] && [ -f "$SNAP2" ]; then
-  HAS_BASELINE=true
-  log "--- BASELINE SNAPSHOTS ---"
-  log "  $DB1 baseline: $SNAP1 ($(wc -l < "$SNAP1" | tr -d ' ') tables)"
-  log "  $DB2 baseline: $SNAP2 ($(wc -l < "$SNAP2" | tr -d ' ') tables)"
-  log ""
+  B1_ROWS=$(parse_snapshot < "$SNAP1" | wc -l | tr -d ' ')
+  B2_ROWS=$(parse_snapshot < "$SNAP2" | wc -l | tr -d ' ')
+  if [ "$B1_ROWS" -eq 0 ] || [ "$B2_ROWS" -eq 0 ]; then
+    log "  !! Baseline snapshots contain no usable rows ($SNAP1=$B1_ROWS, $SNAP2=$B2_ROWS)"
+    log "  !! Falling back to NO-BASELINE mode. Re-capture with: $0 --snapshot $DB1 $DB2"
+  else
+    HAS_BASELINE=true
+    log "--- BASELINE SNAPSHOTS ---"
+    log "  $DB1 baseline: $SNAP1 ($B1_ROWS tables)"
+    log "  $DB2 baseline: $SNAP2 ($B2_ROWS tables)"
+    log ""
+  fi
 fi
 
 # --- Table list comparison ---
@@ -173,8 +205,8 @@ T2_COUNT=$(dbo_count "$TMPDIR/cur2.txt")
 log "  $DB1: $T1_COUNT tables"
 log "  $DB2: $T2_COUNT tables"
 
-TABLES1=$(grep 'dbo.' "$TMPDIR/cur1.txt" | awk '{print $1}' | sort)
-TABLES2=$(grep 'dbo.' "$TMPDIR/cur2.txt" | awk '{print $1}' | sort)
+TABLES1=$(grep 'dbo.' "$TMPDIR/cur1.txt" | awk '{print $1}' | sort || true)
+TABLES2=$(grep 'dbo.' "$TMPDIR/cur2.txt" | awk '{print $1}' | sort || true)
 T_ONLY1=$(comm -23 <(echo "$TABLES1") <(echo "$TABLES2") || true)
 T_ONLY2=$(comm -13 <(echo "$TABLES1") <(echo "$TABLES2") || true)
 if [ -n "$T_ONLY1" ]; then

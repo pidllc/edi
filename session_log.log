@@ -296,3 +296,47 @@
 - readwrite_user still cannot CREATE DATABASE; all minimal-copy creation must use SA.
 - Backup file retains full copy: E:\MSSQL\Data\flask_minimal.bak (also earlier flask_minimal_test.bak)
 - Monitoring (mon schema) removed from flask_minimal during purge; re-deploy with 13_deploy_full_monitoring.sql if audit needed on minimal.
+2026-09-20 15:21:44 [Q&A] Question: if DBs dropped, does monitoring survive? 
+
+[2026-09-20 15:21:46] Q&A: If flask/wfashion are DROPPED, all monitoring artifacts go with them (they live inside the DB): mon schema (dml_audit/ddl_audit/rowcount_history), trg_audit_* table triggers, trg_mon_ddl_audit (DB-scoped), procs sp_capture_snapshot/sp_activity_summary, view vw_ddl_audit_parsed, Query Store. Server-level login/user (monitoring user) survives. Redeploy after restore = 13 + trigger file + 16? + sp_capture_snapshot. compare_dbs.sh is unaffected (does not use mon).
+
+[2026-10-02 13:05:30] DIAGNOSIS: compare_dbs.sh failing to connect (user reported "erroring out")
+
+## Symptom
+- 5 consecutive runs (12:51-12:57) produced empty temp/reports/<ts>/csv dirs and NO report file.
+- temp/snapshot_erp.txt + temp/snapshot_wfashion.txt contained ONLY:
+  "SSL Provider: [OpenSSL library could not be loaded, make sure OpenSSL 1.0, 1.1, or 3.0 is installed]"
+  "Client unable to establish connection."
+
+## Root cause 1 (connectivity, NOT a script bug)
+- ODBC Driver 17 dlopen()s libssl/libcrypto by soname, but neither /opt/homebrew/bin/sqlcmd nor
+  /opt/homebrew/Cellar/msodbcsql17/17.11.1.1/lib/libmsodbcsql.17.dylib carries an LC_RPATH, and
+  /opt/homebrew/lib is not on dyld's default search path -> dlopen fails.
+- Trigger: openssl@3 upgraded to 3.6.5 on 2026-10-01 13:38, immediately before the failing runs.
+- Proof: sqlcmd exit=1 without env var, exit=0 with DYLD_LIBRARY_PATH=/opt/homebrew/lib.
+
+## Root cause 2 (latent script bug, exposed once #1 was fixed)
+- The corrupt snapshot files (pure SQL error text) were accepted as valid baselines.
+- parse_snapshot's `grep -E '^\['` returned 1 on them; under `set -euo pipefail` that aborted the
+  script with a zero exit status path and no report written.
+
+## Fixes applied to sql-monitoring/compare_dbs.sh
+- Export DYLD_LIBRARY_PATH from detected brew prefix (openssl@3/lib + lib), keeping existing value.
+- New preflight_db(): tests connectivity to BOTH DBs before any report dir is created; on failure
+  prints the sqlcmd error to stderr and exits 1 with an SSL hint if applicable. No empty-dir residue.
+- parse_counts/parse_snapshot now tolerate zero-match greps (`|| true`).
+- Baselines validated at load: if either has 0 parseable rows -> warn, print the --snapshot
+  re-capture command, and fall back to no-baseline mode instead of dying silently.
+- TABLES1/TABLES2 extraction hardened with `|| true`.
+
+## Recovery performed
+- Re-captured baselines: ./compare_dbs.sh --snapshot erp wfashion -> 588 rows each (read-only
+  COUNT_BIG via 22_snapshot_checksums.sql; took ~90s).
+- Verified: env -u DYLD_LIBRARY_PATH ./compare_dbs.sh erp wfashion -> exit 0, full txt+md report.
+  erp vs wfashion: 588 tables each, IDENTICAL table list, IDENTICAL trigger list, 0 changes.
+
+## Findings
+- NEW: db `erp` IS accessible to readwrite_user on 192.168.168.106:2436 (588 tables, triggers match
+  wfashion exactly). Prior AGENTS.md status listed only wfashion + flask.
+- Residual: 8 empty report dirs from the failed runs still on disk (20261002_1251xx/1256xx/1257xx) +
+  test runs 20261002_1300xx. Not deleted; safe to remove.
