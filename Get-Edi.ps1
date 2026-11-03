@@ -41,6 +41,16 @@ elseif ($Action -eq "move824") {
     $DATETIME = $(Get-Date -Format "MMddyy")
     ./Move-files.ps1 Z:\ISOFT\inbox\walmart\*~824~*.in Z:\ISOFT\inbox\walmart\DSVSAMSC2026\${DATETIME}\824
 }
+elseif ($Action -eq "append855out") {
+    if ( -not $source) {
+        Write-host "I need a source folder"
+        exit 1
+    }
+    $all855Files = Get-ChildItem -path $source | ?{$_.name -match ".855$" -or $_.name -match ".997$"}
+    foreach ($855File in $all855Files) {
+        Rename-Item $855File.FullName -newName ($855File.FullName + ".out")
+    }
+}
 else{
     Write-Host "Invalid action specified. Please use one of the following actions: check997, analyze850, analyze850andrew, detail850, detail850andrew, move997, move850."
 }

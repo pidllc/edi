@@ -1,0 +1,17 @@
+﻿{
+    "saveToSentItems":  "true",
+    "message":  {
+                    "subject":  "SAMS DSV 20261102 1st batch",
+                    "body":  {
+                                 "contentType":  "HTML",
+                                 "content":  "\u003cp\u003eKaren,\u003c/p\u003e\r\n\u003cp\u003ePick tickets and Detail attached for SAMS DSV 20261102 1st batch\u003c/p\u003e\r\n\u003cbr/\u003e\u003chr/\u003e\r\n\u003cp style=\"font-size:12px; color:#666;\"\u003e\r\n  \u003cstrong\u003eTarun Munjal\u003c/strong\u003e\u003cbr/\u003e\r\n  PID LLC | tarun@pidllc.com | +1-917-410-0872\u003cbr/\u003e\r\n\u003c/p\u003e"
+                             },
+                    "toRecipients":  [
+                                         {
+                                             "emailAddress":  {
+                                                                  "address":  "tarun@pidllc.com"
+                                                              }
+                                         }
+                                     ]
+                }
+}

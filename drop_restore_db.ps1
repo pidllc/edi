@@ -1,15 +1,14 @@
 # drop_restore_db.ps1 - Drop, restore, and deploy monitoring to databases
 # Usage: .\drop_restore_db.ps1
 param (
-    [string]$Server = "192.168.168.106,2436",
+    [string]$Server,
     [string[]]$Databases,
-    [string]$BackupFile = "F:\SQLBACKUP\82026.bak",
+    [string]$BackupFile = "F:\SQLBACKUP\082626.bak",
     [string]$MonitoringDir = "$PSScriptRoot\sql-monitoring"
 )
 
-
-
-#$Server = "192.168.168.106,2436"
+#$Server = "192.168.168.236,2436" # NJWFDEVSSQL/WFASHIONSQL
+#$Server = "192.168.168.106,2436" # FLASKSQL2016/FLASKSQL
 #$Databases = @("flask", "wfashion")
 #$BackupFile = "F:\SQLBACKUP\82026.bak"
 #$RepoRoot = & git rev-parse --show-toplevel 2>&1
@@ -36,9 +35,13 @@ function restore-databases-with-monitoring {
 param(
     [Parameter()]
     [string[]]$databases,
-    [string]$BackupFile = "F:\SQLBACKUP\82026.bak",
+    [string]$BackupFile,
     [string]$MonitoringDir = "$PSScriptRoot\sql-monitoring"
 )
+    if (-not $BackupFile) {
+        Write-Host "Error: Backup file path is required." -ForegroundColor Red
+        return
+    }
 
     foreach ($db in $Databases) {
         Write-Host "========================================" -ForegroundColor Cyan
@@ -88,6 +91,8 @@ param(
         Write-Host "Completed: $db" -ForegroundColor Green
         Write-Host ""
     }
+    
+    Write-Host "All databases processed successfully!" -ForegroundColor Green
 }
 
 function restore-databases {
@@ -95,7 +100,7 @@ function restore-databases {
 param(
     [Parameter()]
     [string[]]$databases,
-    [string]$BackupFile = "F:\SQLBACKUP\82026.bak"
+    [string]$BackupFile
     
 )
 
@@ -105,12 +110,17 @@ param(
         Write-Host "========================================" -ForegroundColor Cyan
 
         # Step 1: Drop and restore
-        Write-Host "Step 1: Dropping and restoring $db..." -ForegroundColor Yellow
+        Write-Host "Step 1: Dropping and restoring $db. $BackupFile.." -ForegroundColor Yellow
         sqlcmd -S $Server -d "master" -U $Username -P $Password -C `
             -i "$PSScriptRoot\droprestoredb.sql" `
             -v DBNAME=$db BACKUPFILE=$BackupFile
     }
-}
-restore-databases-with-monitoring -databases $Databases
 
 Write-Host "All databases processed successfully!" -ForegroundColor Green
+}
+$sw = [Diagnostics.Stopwatch]::StartNew()
+restore-databases -databases $Databases -BackupFile $BackupFile
+$sw.Stop()
+Write-Host "Elapsed: $($sw.ElapsedMilliseconds) ms"
+
+Write-host "Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
